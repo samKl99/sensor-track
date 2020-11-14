@@ -14,3 +14,21 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Edit app launcher name
+  
+Edit `pubspec.yaml` and change the `flutter_launcher_name.name` value. Run following command to apply your change to
+Android and iOS code:
+  
+```
+flutter pub run flutter_launcher_name:main
+```
+  
+## Edit app launcher icon
+ 
+Edit `assets/launcher/logo.png`. Run following command to apply your change to Android and iOS code: 
+
+```
+flutter pub run flutter_launcher_icons:main
+```
+
