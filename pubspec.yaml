@@ -35,6 +35,8 @@ dependencies:
 
   package_info: ^0.4.3+2
 
+  flutter_blue: ^0.7.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
