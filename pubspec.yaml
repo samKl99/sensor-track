@@ -47,7 +47,7 @@ dev_dependencies:
 flutter_icons:
   ios: true
   android: false
-  image_path: "assets/launcher/logo.png"
+  image_path: "assets/launcher/logo.jpg"
 
 flutter_launcher_name:
   name: "SensorTrack"
