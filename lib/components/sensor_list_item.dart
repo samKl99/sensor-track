@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:sensor_track/models/sensor_device.dart';
 
 class SensorListItem extends StatelessWidget {
-  final String sensorName;
+  final SensorDevice sensorDevice;
 
-  const SensorListItem({this.sensorName});
+  const SensorListItem(this.sensorDevice);
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Column(
         children: [
-          Text(this.sensorName ?? "")
+          Text(sensorDevice.name ?? "Keine Name vorhanden"),
+          Text(sensorDevice.rssi.toString() ?? "-"),
         ],
       ),
     );
