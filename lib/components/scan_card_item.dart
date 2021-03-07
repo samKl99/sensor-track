@@ -1,6 +1,7 @@
 import 'package:charcode/charcode.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:sensor_track/components/round_image.dart';
 import 'package:sensor_track/repositories/scan_repository/src/models/scan.dart';
 import 'package:sensor_track/util/date_util.dart';
 import 'package:tinycolor/tinycolor.dart';
@@ -44,29 +45,7 @@ class ScanCardItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(
-                  width: 35.0,
-                  height: 35.0,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: Colors.white.withOpacity(0.2),
-                        spreadRadius: 4.5,
-                        offset: const Offset(0.0, 0.0),
-                      )
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Image.asset(
-                      scan.sensorDeviceLogoURL,
-                      fit: BoxFit.contain,
-                      width: 30.0,
-                    ),
-                  ),
-                )
+                RoundImage(scan.sensorDeviceLogoURL),
               ],
             ),
             const SizedBox(

@@ -1,9 +1,10 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sensor_track/components/scan_card_item.dart';
-import 'package:sensor_track/repositories/scan_repository/src/models/scan.dart';
-import 'package:sensor_track/services/bluetooth_service.dart';
-import 'package:sensor_track/services/scan_service.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:sensor_track/screens/last_scans_screen.dart';
+import 'package:sensor_track/screens/scan_screen.dart';
+import 'package:sensor_track/screens/sensor_screen.dart';
+import 'package:sensor_track/style/style.dart';
 import 'package:tinycolor/tinycolor.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,82 +13,103 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  ScanService _scanService;
+  static const double _fabDimension = 80.0;
+  int _currentIndex;
+
+  final _tabs = <BottomNavigationBarItem>[
+    BottomNavigationBarItem(
+      label: "Sensoren",
+      activeIcon: SvgPicture.asset(
+        "assets/icons/sensors.svg",
+        semanticsLabel: "Übersicht",
+        color: secondaryColor,
+      ),
+      icon: SvgPicture.asset(
+        "assets/icons/sensors.svg",
+        semanticsLabel: "Übersicht",
+        color: Colors.white,
+      ),
+    ),
+    BottomNavigationBarItem(label: "Scans", icon: Icon(Icons.list_rounded)),
+  ];
+
+  final _targetsScreens = [
+    SensorScreen(),
+    LastScansScreen(),
+  ];
+
+  final _titles = ["Sensoren", "Letzte Scans"];
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = 0;
   }
 
   @override
   Widget build(BuildContext context) {
-    _scanService = Provider.of<ScanService>(context, listen: false)..getLastScans();
-    final bluetoothService = Provider.of<BluetoothService>(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text("Letzte Scans"),
+        title: Text(_titles[_currentIndex]),
         centerTitle: true,
         elevation: 0,
         backgroundColor: TinyColor.fromString("#2c2e3d").color,
       ),
-      body: StreamBuilder<bool>(
-        stream: _scanService.scansLoading,
-        builder: (context, loadingSnapshot) {
-          return StreamBuilder<List<Scan>>(
-            stream: _scanService.scans,
-            builder: (context, snapshot) {
-              if (loadingSnapshot.connectionState == ConnectionState.waiting ||
-                  snapshot.connectionState == ConnectionState.waiting ||
-                  loadingSnapshot.data) {
-                return Center(
-                  child: CircularProgressIndicator(),
+      body: _targetsScreens[_currentIndex],
+      bottomNavigationBar: bottomNavigationBar,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: _currentIndex == 0
+          ? OpenContainer(
+              transitionType: ContainerTransitionType.fade,
+              openBuilder: (context, _) {
+                return ScanScreen();
+              },
+              closedElevation: 6,
+              openShape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(_fabDimension / 2),
+                ),
+              ),
+              closedShape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(_fabDimension / 2),
+                ),
+              ),
+              openColor: TinyColor.fromString("#2c2e3d").color,
+              closedColor: TinyColor.fromString("#2c2e3d").color,
+              closedBuilder: (BuildContext context, VoidCallback openContainer) {
+                return FloatingActionButton(
+                  child: Icon(Icons.add),
                 );
-              }
-              else if (snapshot.hasData && snapshot.data.isNotEmpty) {
-                return GridView.count(
-                  crossAxisCount: 2,
-                  children: List.generate(
-                    snapshot.data.length,
-                    (index) => ScanCardItem(snapshot.data[index]),
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text("Error"),
-                );
-              } else {
-                return Center(
-                  child: Text(
-                    "Keine letzten Scans verfügbar",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                );
-              }
-            },
-          );
-        },
+              },
+            )
+          : null,
+    );
+  }
+
+  Widget get bottomNavigationBar {
+    return ClipRRect(
+      borderRadius: BorderRadius.only(
+        topRight: Radius.circular(30),
+        topLeft: Radius.circular(30),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          //bluetoothService.startScan();
-          /*
-          _scanService.addScan(
-            Scan(
-              temperature: 30.7,
-              humidity: 23.1,
-              pressure: 1753,
-              createdAt: DateTime.now(),
-              sensorDeviceName: "Sensor 1",
-              sensorDeviceLogoURL: "assets/sensor-icons/ruuvi.png",
-            ),
-          );
-           */
-        },
-        icon: Icon(Icons.bluetooth_searching),
-        label: Text("Scannen"),
+      child: BottomNavigationBar(
+        elevation: 16.0,
+        backgroundColor: primaryColorDark,
+        currentIndex: _currentIndex,
+        onTap: _navigate,
+        type: BottomNavigationBarType.fixed,
+        items: _tabs,
+        selectedItemColor: secondaryColor,
+        unselectedItemColor: Colors.white,
+        unselectedFontSize: 14,
       ),
     );
+  }
+
+  void _navigate(final int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 }

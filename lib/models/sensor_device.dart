@@ -1,8 +1,12 @@
-class SensorDevice {
-  final int rssi;
-  final String id;
-  final String name;
-  final String logoURL;
+import 'package:sensor_track/services/sensor_service.dart';
 
-  const SensorDevice({this.rssi, this.id, this.name, this.logoURL});
+class SensorDevice {
+  final String id;
+  String name;
+  String logoURL;
+  bool persisted;
+
+  SensorDevice({this.id, this.name, this.logoURL, this.persisted}) {
+    logoURL = logoURL ?? SensorService.getLogoImageForSensor(this);
+  }
 }
