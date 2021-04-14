@@ -13,4 +13,9 @@ class RuuviAcceleration {
     this.accelerationY = 0,
     this.accelerationZ = 0,
   });
+
+  @override
+  String toString() {
+    return "accelerationX: $accelerationX, accelerationY: $accelerationY, accelerationZ: $accelerationZ";
+  }
 }

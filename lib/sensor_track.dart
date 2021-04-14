@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/screens/home_screen.dart';
-import 'package:sensor_track/screens/splash_screen.dart';
 import 'package:sensor_track/services/bluetooth_service.dart';
 import 'package:sensor_track/services/scan_service.dart';
 import 'package:sensor_track/services/sensor_service.dart';
@@ -15,31 +14,28 @@ class SensorTrack extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        FutureProvider<HiveScanRepository>(
-          initialData: null,
-          create: (_) async => HiveScanRepository().init(),
-          lazy: false,
+        Provider<BluetoothService>(
+          create: (_) => BluetoothService(),
+          dispose: (context, service) => service.dispose(),
         ),
-        FutureProvider<HiveSensorRepository>(
-          initialData: null,
-          create: (_) async => HiveSensorRepository().init(),
-          lazy: false,
+        Provider<HiveScanRepository>(
+          create: (_) => HiveScanRepository(),
+        ),
+        Provider<HiveSensorRepository>(
+          create: (_) => HiveSensorRepository(),
         ),
         ProxyProvider<HiveScanRepository, ScanService>(
           update: (context, repository, _) => ScanService(repository),
           dispose: (context, service) => service.dispose(),
         ),
-        ProxyProvider<HiveSensorRepository, SensorService>(
-          update: (context, repository, _) => SensorService(repository),
-          dispose: (context, service) => service.dispose(),
-        ),
-        ProxyProvider<SensorService, BluetoothService>(
-          update: (context, sensorService, _) => BluetoothService(sensorService),
+        ProxyProvider2<HiveSensorRepository, BluetoothService, SensorService>(
+          update: (context, repository, bluetoothService, _) => SensorService(repository, bluetoothService),
           dispose: (context, service) => service.dispose(),
         ),
       ],
       child: MaterialApp(
         title: 'Sensor Track',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           visualDensity: VisualDensity.adaptivePlatformDensity,
           scaffoldBackgroundColor: primaryColor,
@@ -56,15 +52,7 @@ class SensorTrack extends StatelessWidget {
           ),
           buttonTheme: ButtonThemeData(buttonColor: secondaryColor),
         ),
-        home: Consumer2<HiveScanRepository, HiveSensorRepository>(
-          builder: (context, scanRepository, sensorRepository, widget) {
-            if (scanRepository == null || sensorRepository == null) {
-              return SplashScreen();
-            } else {
-              return HomeScreen();
-            }
-          },
-        ),
+        home: HomeScreen(),
       ),
     );
   }

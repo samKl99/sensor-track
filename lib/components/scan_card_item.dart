@@ -2,32 +2,24 @@ import 'package:charcode/charcode.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:sensor_track/components/round_image.dart';
+import 'package:sensor_track/components/sensor_track_card.dart';
 import 'package:sensor_track/repositories/scan_repository/src/models/scan.dart';
+import 'package:sensor_track/util/converter_util.dart';
 import 'package:sensor_track/util/date_util.dart';
-import 'package:tinycolor/tinycolor.dart';
 
 class ScanCardItem extends StatelessWidget {
   final Scan scan;
+  final VoidCallback? onTap;
 
-  const ScanCardItem(this.scan);
+  const ScanCardItem({
+    required this.scan,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(5.0),
-      constraints: const BoxConstraints.expand(),
-      decoration: BoxDecoration(
-        color: TinyColor.fromString("#35374a").color,
-        borderRadius: BorderRadius.circular(25.0),
-        shape: BoxShape.rectangle,
-        boxShadow: <BoxShadow>[
-          const BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6.5,
-            offset: const Offset(0.0, 5.0),
-          ),
-        ],
-      ),
+    return SensorTrackCard(
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 15.0),
         child: Column(
@@ -38,14 +30,14 @@ class ScanCardItem extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 1.0),
                   child: Text(
-                    scan.sensorDeviceName,
-                    style: TextStyle(
+                    scan.sensorDeviceName != null ? scan.sensorDeviceName! : "",
+                    style: const TextStyle(
                       fontSize: 18.0,
                       color: Colors.white,
                     ),
                   ),
                 ),
-                RoundImage(scan.sensorDeviceLogoURL),
+                scan.sensorDeviceLogoURL != null ? RoundImage(scan.sensorDeviceLogoURL!) : Container(),
               ],
             ),
             const SizedBox(
@@ -53,108 +45,61 @@ class ScanCardItem extends StatelessWidget {
             ),
             Column(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 25.0,
-                      child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.thermometerThreeQuarters,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 8.0,
-                    ),
-                    Text(
-                      "${scan.temperature} ${String.fromCharCode($deg)}C",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                _temperatureRow,
                 const SizedBox(
                   height: 8.0,
                 ),
-                Row(
-                  children: [
-                    Container(
-                      width: 25.0,
-                      child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.tint,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 8.0,
-                    ),
-                    Text(
-                      "${scan.humidity} %",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                _humidityRow,
                 const SizedBox(
                   height: 8.0,
                 ),
-                Row(
-                  children: [
-                    Container(
-                      width: 25.0,
-                      child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.wind,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 8.0,
-                    ),
-                    Text(
-                      "${scan.pressure} hPa",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                _pressureRow,
                 const SizedBox(
                   height: 8.0,
                 ),
-                Row(
-                  children: [
-                    Container(
-                      width: 25.0,
-                      child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.clock,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 8.0,
-                    ),
-                    Text(
-                      "${DateUtil.germanDateTimeFormatter.format(scan.createdAt)}",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                _createdAtRow
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget get _temperatureRow => _buildScanDataRow(FontAwesomeIcons.thermometerThreeQuarters, Colors.orange,
+      "${scan.temperature != null ? scan.temperature! : "-"} ${String.fromCharCode($deg)}C");
+
+  Widget get _humidityRow =>
+      _buildScanDataRow(FontAwesomeIcons.tint, Colors.blueAccent, "${scan.humidity != null ? scan.humidity! : "-"} %");
+
+  Widget get _pressureRow => _buildScanDataRow(
+      FontAwesomeIcons.wind, Colors.white70, "${scan.pressure != null ? ConverterUtil.fromPaToHPa(scan.pressure!) : "-"} hPa");
+
+  Widget get _createdAtRow => _buildScanDataRow(
+      FontAwesomeIcons.clock, Colors.grey, scan.createdAt != null ? "${DateUtil.germanDateTimeFormatter.format(scan.createdAt!)}" : "");
+
+  Widget _buildScanDataRow(final IconData iconData, final Color iconColor, final String dataString) {
+    return Row(
+      children: [
+        Container(
+          width: 25.0,
+          child: Center(
+            child: FaIcon(
+              iconData,
+              color: iconColor,
+            ),
+          ),
+        ),
+        const SizedBox(
+          width: 8.0,
+        ),
+        Text(
+          dataString,
+          style: const TextStyle(
+            color: Colors.white,
+          ),
+        ),
+      ],
     );
   }
 }

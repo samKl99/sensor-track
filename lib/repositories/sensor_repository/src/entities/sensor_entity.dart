@@ -6,25 +6,25 @@ part 'sensor_entity.g.dart';
 @HiveType(typeId: 2)
 class SensorEntity {
   @HiveField(0)
-  String id;
+  String? id;
 
   @HiveField(1)
-  SensorType type;
+  SensorType? type;
 
   @HiveField(2)
-  String name;
+  String? name;
 
   @HiveField(3)
-  String logoURL;
+  String? logoURL;
 
-  @HiveField(4)
-  String deviceId;
+  @HiveField(5)
+  String? macAddress;
 
   SensorEntity({
     this.id,
     this.type,
     this.name,
     this.logoURL,
-    this.deviceId,
+    this.macAddress,
   });
 }

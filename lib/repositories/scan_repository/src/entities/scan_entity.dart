@@ -5,31 +5,43 @@ part 'scan_entity.g.dart';
 @HiveType(typeId: 1)
 class ScanEntity {
   @HiveField(0)
-  String id;
+  String? id;
 
   @HiveField(1)
-  double temperature;
+  double? temperature;
 
   @HiveField(2)
-  double humidity;
+  double? humidity;
 
   @HiveField(3)
-  int pressure;
+  int? pressure;
 
   @HiveField(4)
-  DateTime createdAt;
+  DateTime? createdAt;
 
   @HiveField(5)
-  String sensorDeviceName;
+  String? sensorDeviceName;
 
   @HiveField(6)
-  String sensorDeviceLogoURL;
+  String? sensorDeviceLogoURL;
+
+  @HiveField(7)
+  int? accelerationX;
+
+  @HiveField(8)
+  int? accelerationY;
+
+  @HiveField(9)
+  int? accelerationZ;
 
   ScanEntity({
     this.id,
     this.pressure,
     this.temperature,
     this.humidity,
+    this.accelerationX,
+    this.accelerationY,
+    this.accelerationZ,
     this.sensorDeviceLogoURL,
     this.sensorDeviceName,
     this.createdAt,

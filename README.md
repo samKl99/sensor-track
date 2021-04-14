@@ -15,6 +15,12 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+## Generate Hive Adapters
+
+```
+flutter packages pub run build_runner build --delete-conflicting-outputs
+```
+
 ## Edit app launcher name
   
 Edit `pubspec.yaml` and change the `flutter_launcher_name.name` value. Run following command to apply your change to

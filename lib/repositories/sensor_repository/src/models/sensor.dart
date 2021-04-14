@@ -3,19 +3,34 @@ import 'package:sensor_track/repositories/sensor_repository/src/models/sensor_ty
 import 'package:uuid/uuid.dart';
 
 class Sensor {
-  String id;
-  SensorType type;
-  String name;
-  String logoURL;
-  String deviceId;
+  static const _RUUVI_SENSOR_IMAGE_URL = "assets/sensor-icons/ruuvi.png";
+  static const _TEXAS_INSTRUMENTS_SENSOR_IMAGE_URL = "assets/sensor-icons/texas_instruments.png";
+
+  String? id;
+  SensorType? type;
+  String? name;
+  String? logoURL;
+  String? macAddress;
+  bool? persisted;
+
+  double? temperature;
+  double? humidity;
+  int? pressure;
 
   Sensor({
-    String id,
+    String? id,
+    bool? persisted,
+    this.macAddress,
     this.type,
     this.name,
-    this.logoURL,
-    this.deviceId,
-  }) : this.id = id ?? Uuid().v4();
+  }) {
+    this.id = id ?? Uuid().v4();
+    this.persisted = persisted ?? false;
+
+    if (this.type == SensorType.RUUVI) {
+      this.logoURL = _RUUVI_SENSOR_IMAGE_URL;
+    }
+  }
 
   SensorEntity toEntity() {
     return SensorEntity(
@@ -23,7 +38,7 @@ class Sensor {
       type: this.type,
       name: this.name,
       logoURL: this.logoURL,
-      deviceId: this.deviceId,
+      macAddress: this.macAddress,
     );
   }
 
@@ -32,8 +47,8 @@ class Sensor {
       id: entity.id,
       type: entity.type,
       name: entity.name,
-      logoURL: entity.logoURL,
-      deviceId: entity.deviceId,
+      macAddress: entity.macAddress,
+      persisted: true,
     );
   }
 }
