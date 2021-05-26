@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:sensor_track/components/round_image.dart';
-import 'package:sensor_track/models/sensor_device.dart';
+import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/style/style.dart';
 
 class SensorListItem extends StatelessWidget {
-  final SensorDevice sensorDevice;
+  final Sensor sensor;
   final bool hideTrailingIcon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
-  const SensorListItem({this.sensorDevice, this.onTap, this.hideTrailingIcon = false});
+  const SensorListItem({
+    required this.sensor,
+    this.onTap,
+    this.hideTrailingIcon = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,22 +34,23 @@ class SensorListItem extends StatelessWidget {
       ),
       child: ListTile(
         title: Text(
-          sensorDevice.name ?? "Kein Name vorhanden",
+          sensor.name ?? "Kein Name vorhanden",
           style: TextStyle(
             fontSize: 18.0,
             color: Colors.white,
           ),
         ),
-        leading: RoundImage(sensorDevice.logoURL),
+        onTap: onTap,
+        leading: sensor.logoURL != null ? RoundImage(sensor.logoURL!) : null,
         trailing: !hideTrailingIcon
             ? IconButton(
-                icon: sensorDevice.persisted != null && sensorDevice.persisted
+                icon: sensor.persisted != null && sensor.persisted!
                     ? Icon(
                         Icons.star_rounded,
                         color: Theme.of(context).accentColor,
                         size: 28.0,
                       )
-                    : Icon(
+                    : const Icon(
                         Icons.star_border_rounded,
                         color: Colors.white,
                         size: 28.0,

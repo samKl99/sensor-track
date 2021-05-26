@@ -7,9 +7,9 @@ abstract class SensorRepository {
 
   Future<void> deleteSensorById(String id);
 
-  List<Sensor> sensors({int limit});
+  Future<List<Sensor>> sensors({int limit});
 
   Future<void> updateSensor(Sensor oldSensor, Sensor newSensor);
 
-  Sensor sensorById(String id);
+  Future<Sensor?> sensorById(String? id);
 }

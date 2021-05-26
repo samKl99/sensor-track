@@ -1,11 +1,11 @@
-import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sensor_track/components/fade_route_builder.dart';
+import 'package:sensor_track/components/sensor_track_app_bar.dart';
 import 'package:sensor_track/screens/last_scans_screen.dart';
-import 'package:sensor_track/screens/scan_screen.dart';
+import 'package:sensor_track/screens/sensor_scan_screen.dart';
 import 'package:sensor_track/screens/sensor_screen.dart';
 import 'package:sensor_track/style/style.dart';
-import 'package:tinycolor/tinycolor.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -13,8 +13,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const double _fabDimension = 80.0;
-  int _currentIndex;
+  final GlobalKey _fabButtonKey = GlobalKey();
+  Rect? _fabButtonRect;
+  Rect? _pageTransitionRect;
+  late int _currentIndex;
 
   final _tabs = <BottomNavigationBarItem>[
     BottomNavigationBarItem(
@@ -48,43 +50,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: TinyColor.fromString("#2c2e3d").color,
-      ),
-      body: _targetsScreens[_currentIndex],
-      bottomNavigationBar: bottomNavigationBar,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: _currentIndex == 0
-          ? OpenContainer(
-              transitionType: ContainerTransitionType.fade,
-              openBuilder: (context, _) {
-                return ScanScreen();
-              },
-              closedElevation: 6,
-              openShape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(_fabDimension / 2),
-                ),
-              ),
-              closedShape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(_fabDimension / 2),
-                ),
-              ),
-              openColor: TinyColor.fromString("#2c2e3d").color,
-              closedColor: TinyColor.fromString("#2c2e3d").color,
-              closedBuilder: (BuildContext context, VoidCallback openContainer) {
-                return FloatingActionButton(
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: SensorTrackAppBar(title: Text(_titles[_currentIndex])),
+          body: _targetsScreens[_currentIndex],
+          bottomNavigationBar: bottomNavigationBar,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: _currentIndex == 0
+              ? FloatingActionButton(
+                  key: _fabButtonKey,
                   child: Icon(Icons.add),
-                );
-              },
-            )
-          : null,
+                  onPressed: () => _startPageTransition(),
+                )
+              : null,
+        ),
+        _pageTransition
+      ],
     );
+  }
+
+  void _startPageTransition() {
+    setState(() {
+      _fabButtonRect = _getWidgetRect(_fabButtonKey);
+      _pageTransitionRect = _fabButtonRect;
+    });
+
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      final fullscreenSize = 1.3 * MediaQuery.of(context).size.longestSide;
+      setState(() => _pageTransitionRect = _pageTransitionRect?.inflate(fullscreenSize));
+    });
+  }
+
+  Rect? _getWidgetRect(GlobalKey globalKey) {
+    var renderObject = globalKey.currentContext?.findRenderObject();
+    var translation = renderObject?.getTransformTo(null).getTranslation();
+    var size = renderObject?.semanticBounds.size;
+
+    if (translation != null && size != null) {
+      return new Rect.fromLTWH(translation.x, translation.y, size.width, size.height);
+    } else {
+      return null;
+    }
   }
 
   Widget get bottomNavigationBar {
@@ -104,6 +111,36 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.white,
         unselectedFontSize: 14,
       ),
+    );
+  }
+
+  Widget get _pageTransition {
+    if (_pageTransitionRect == null) {
+      return Container();
+    }
+
+    return AnimatedPositioned.fromRect(
+      rect: _pageTransitionRect!,
+      duration: Duration(milliseconds: 300),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: primaryColorLight,
+        ),
+      ),
+      onEnd: () {
+        bool shouldNavigatePage = _pageTransitionRect != _fabButtonRect;
+        if (shouldNavigatePage) {
+          Navigator.push(
+            context,
+            FadeRouteBuilder(page: ScanScreen()),
+          ).then((_) {
+            setState(() => _pageTransitionRect = _fabButtonRect);
+          });
+        } else {
+          setState(() => _pageTransitionRect = null);
+        }
+      },
     );
   }
 

@@ -4,7 +4,7 @@ import 'package:sensor_track/ruuvi/ruuvi_power_info.dart';
 /* Decoder for Ruuvi data format 5 (https://github.com/ruuvi/ruuvi-sensor-protocols/blob/master/dataformat_05.md) */
 class RuuviDataFormat5Decoder {
   /* return temperature in celsius */
-  static double getTemperature(final List<int> data) {
+  static double? getTemperature(final List<int> data) {
     if (data[1] == 0x7FFF) {
       return null;
     }
@@ -14,7 +14,7 @@ class RuuviDataFormat5Decoder {
   }
 
   /* return humidity % */
-  static double getHumidity(final List<int> data) {
+  static double? getHumidity(final List<int> data) {
     if (data[3] == 0x7FFF) {
       return null;
     }
@@ -23,7 +23,7 @@ class RuuviDataFormat5Decoder {
   }
 
   /* return air pressure hPa */
-  static int getPressure(final List<int> data) {
+  static int? getPressure(final List<int> data) {
     if (data[5] == 0x7FFF) {
       return null;
     }
@@ -32,7 +32,7 @@ class RuuviDataFormat5Decoder {
   }
 
   /* return acceleration mG */
-  static RuuviAcceleration getAcceleration(final List<int> data) {
+  static RuuviAcceleration? getAcceleration(final List<int> data) {
     if (data[7] == 0x7FFF || data[9] == 0x7FFF || data[11] == 0x7FFF) {
       return null;
     }
@@ -49,10 +49,10 @@ class RuuviDataFormat5Decoder {
   }
 
   /* return RuuviPowerInfo (battery voltage, tx power) */
-  static RuuviPowerInfo getPowerInfo(final List<int> data) {
+  static RuuviPowerInfo? getPowerInfo(final List<int> data) {
     final powerInfo = (data[13] & 0xFF) << 8 | (data[14] & 0xFF);
-    int battery = _rShift(powerInfo, 5) + 1600;
-    int txPower = (powerInfo & 0x1F) * 2 - 40;
+    int? battery = _rShift(powerInfo, 5) + 1600;
+    int? txPower = (powerInfo & 0x1F) * 2 - 40;
 
     if (_rShift(powerInfo, 5) == 0x7FF) {
       battery = null;
@@ -77,14 +77,8 @@ class RuuviDataFormat5Decoder {
   }
 
   static String getMACAddress(final List<int> data) {
-    return [
-      _int2Hex(data[18]),
-      _int2Hex(data[19]),
-      _int2Hex(data[20]),
-      _int2Hex(data[21]),
-      _int2Hex(data[22]),
-      _int2Hex(data[23])
-    ].join(':');
+    return [_int2Hex(data[18]), _int2Hex(data[19]), _int2Hex(data[20]), _int2Hex(data[21]), _int2Hex(data[22]), _int2Hex(data[23])]
+        .join(':');
   }
 
   static int _twosComplement(int value, final int bits) {

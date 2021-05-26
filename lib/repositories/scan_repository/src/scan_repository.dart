@@ -5,7 +5,7 @@ abstract class ScanRepository {
 
   Future<void> deleteScan(Scan scan);
 
-  List<Scan> scans({int limit});
+  Future<List<Scan>> scans({int limit});
 
   Future<void> updateScan(Scan oldScan, Scan newScan);
 }

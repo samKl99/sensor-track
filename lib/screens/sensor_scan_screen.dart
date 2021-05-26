@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_list_item.dart';
-import 'package:sensor_track/models/sensor_device.dart';
+import 'package:sensor_track/components/sensor_track_app_bar.dart';
+import 'package:sensor_track/components/sensor_track_loading_widget.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
-import 'package:sensor_track/services/bluetooth_service.dart';
 import 'package:sensor_track/services/sensor_service.dart';
 import 'package:sensor_track/style/style.dart';
-import 'package:tinycolor/tinycolor.dart';
 
 class ScanScreen extends StatefulWidget {
   @override
@@ -15,18 +13,12 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> {
-  BluetoothService _bluetoothService;
+  late SensorService _sensorService;
 
   @override
   void initState() {
-    _bluetoothService = Provider.of<BluetoothService>(context, listen: false)..startScan();
+    _sensorService = Provider.of<SensorService>(context, listen: false)..searchSensors();
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _bluetoothService.stopScan();
-    super.dispose();
   }
 
   @override
@@ -34,55 +26,50 @@ class _ScanScreenState extends State<ScanScreen> {
     final sensorService = Provider.of<SensorService>(context);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SensorTrackAppBar(
         title: const Text("Scannen"),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: TinyColor.fromString("#2c2e3d").color,
       ),
       body: StreamBuilder<bool>(
-        stream: _bluetoothService.searching,
+        stream: _sensorService.searching,
         builder: (context, searchingSnapshot) {
-          return StreamBuilder<List<SensorDevice>>(
-            stream: _bluetoothService.sensorDevices,
+          return StreamBuilder<List<Sensor>>(
+            stream: _sensorService.sensors,
             builder: (context, snapshot) {
               if (searchingSnapshot.connectionState == ConnectionState.waiting ||
                   snapshot.connectionState == ConnectionState.waiting ||
-                  searchingSnapshot.data) {
-                return _buildBluetoothDevicesSearchingWidget();
-              } else if (snapshot.hasData && snapshot.data.isNotEmpty) {
-                final sensorDevices = snapshot.data;
+                  searchingSnapshot.data != null && searchingSnapshot.data!) {
+                return bluetoothDevicesSearchingWidget;
+              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                final sensorDevices = snapshot.data!;
                 return ListView.builder(
                   itemBuilder: (context, index) {
                     final sensorDevice = sensorDevices[index];
                     return SensorListItem(
-                      sensorDevice: sensorDevice,
+                      sensor: sensorDevice,
                       onTap: () async {
-                        if (sensorService.isSensorPersisted(sensorDevice.id)) {
-                          sensorService.deleteSensorById(sensorDevice.id);
+                        if (await sensorService.isSensorPersisted(sensorDevice.id)) {
+                          await sensorService.deleteSensorById(sensorDevice.id!);
                           setState(() {
                             sensorDevice.persisted = false;
                           });
                         } else {
-                          sensorService.addSensor(sensorDevice);
+                          await sensorService.addSensor(sensorDevice);
                           setState(() {
                             sensorDevice.persisted = true;
                           });
                         }
-                        // refresh sensors
-                        sensorService.getSavedSensors();
                       },
                     );
                   },
                   itemCount: sensorDevices.length,
                 );
               } else if (snapshot.hasError) {
-                return Center(
-                  child: Text("Fehler"),
+                return const Center(
+                  child: const Text("Es ist ein Fehler aufgetreten"),
                 );
               } else {
-                return Center(
-                  child: Text("Keine Sensoren vorhanden"),
+                return const Center(
+                  child: const Text("Keine Sensoren vorhanden"),
                 );
               }
             },
@@ -92,22 +79,22 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
-  Widget _buildBluetoothDevicesSearchingWidget() {
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.bluetooth_searching,
-            color: secondaryColor,
-            size: 40.0,
-          ),
-          SpinKitPulse(
-            color: Colors.white,
-            size: 180.0,
-          ),
-        ],
+  Widget get bluetoothDevicesSearchingWidget {
+    return SensorTrackLoadingWidget(
+      icon: Icon(
+        Icons.bluetooth_searching,
+        color: secondaryColor,
+        size: 40.0,
       ),
     );
+  }
+
+  @override
+  void dispose() async {
+    // refresh sensors
+    _sensorService.getSavedSensors();
+
+    _sensorService.stopSearchingSensors();
+    super.dispose();
   }
 }

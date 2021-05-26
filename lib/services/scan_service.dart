@@ -4,7 +4,7 @@ import 'package:sensor_track/repositories/scan_repository/src/scan_repository.da
 import 'package:sensor_track/services/bloc.dart';
 
 class ScanService extends Bloc {
-  ScanRepository _scanRepository;
+  late ScanRepository _scanRepository;
 
   ScanService(this._scanRepository);
 
@@ -15,10 +15,10 @@ class ScanService extends Bloc {
   final _scans = BehaviorSubject<List<Scan>>.seeded([]);
   final _scansLoading = BehaviorSubject<bool>.seeded(false);
 
-  getLastScans({int limit = 15}) {
+  getLastScans({int limit = 15}) async {
     _scansLoading.add(true);
     try {
-      _scans.add(_scanRepository.scans(limit: limit));
+      _scans.add(await _scanRepository.scans(limit: limit));
     } catch (e) {
       _scans.addError("error loading last scans");
     } finally {
@@ -26,8 +26,12 @@ class ScanService extends Bloc {
     }
   }
 
-  void addScan(final Scan scan) {
-    _scanRepository.addScan(scan);
+  Future<void> addScan(final Scan scan) async {
+    await _scanRepository.addScan(scan);
+  }
+
+  Future<void> deleteScan(final Scan scan) async {
+    await _scanRepository.deleteScan(scan);
   }
 
   List<Scan> _getMockScans() {
