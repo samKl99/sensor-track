@@ -1,9 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:sensor_track/repositories/authentication_repository/authentication_repository.dart';
 import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
+import 'package:sensor_track/screens/auth_screen.dart';
 import 'package:sensor_track/screens/home_screen.dart';
+import 'package:sensor_track/services/authentication_service.dart';
 import 'package:sensor_track/services/bluetooth_service.dart';
 import 'package:sensor_track/services/scan_service.dart';
 import 'package:sensor_track/services/sensor_service.dart';
@@ -21,11 +25,18 @@ class SensorTrack extends StatelessWidget {
         Provider<HiveScanRepository>(
           create: (_) => HiveScanRepository(),
         ),
+        Provider<FirebaseAuthenticationRepository>(
+          create: (_) => FirebaseAuthenticationRepository(firebaseAuth: FirebaseAuth.instance),
+        ),
         Provider<HiveSensorRepository>(
           create: (_) => HiveSensorRepository(),
         ),
         ProxyProvider<HiveScanRepository, ScanService>(
           update: (context, repository, _) => ScanService(repository),
+          dispose: (context, service) => service.dispose(),
+        ),
+        ProxyProvider<FirebaseAuthenticationRepository, AuthenticationService>(
+          update: (context, repository, _) => AuthenticationService(repository)..isUserAuthenticated(),
           dispose: (context, service) => service.dispose(),
         ),
         ProxyProvider2<HiveSensorRepository, BluetoothService, SensorService>(
@@ -52,7 +63,7 @@ class SensorTrack extends StatelessWidget {
           ),
           buttonTheme: ButtonThemeData(buttonColor: secondaryColor),
         ),
-        home: HomeScreen(),
+        home: AuthScreen(),
       ),
     );
   }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 import 'package:sensor_track/components/fade_route_builder.dart';
 import 'package:sensor_track/components/sensor_track_app_bar.dart';
 import 'package:sensor_track/screens/last_scans_screen.dart';
 import 'package:sensor_track/screens/sensor_scan_screen.dart';
 import 'package:sensor_track/screens/sensor_screen.dart';
+import 'package:sensor_track/services/authentication_service.dart';
 import 'package:sensor_track/style/style.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Rect? _fabButtonRect;
   Rect? _pageTransitionRect;
   late int _currentIndex;
+
+  AuthenticationService get _authenticationService => Provider.of<AuthenticationService>(context, listen: false);
 
   final _tabs = <BottomNavigationBarItem>[
     BottomNavigationBarItem(
@@ -53,7 +57,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return Stack(
       children: [
         Scaffold(
-          appBar: SensorTrackAppBar(title: Text(_titles[_currentIndex])),
+          appBar: SensorTrackAppBar(
+            title: Text(_titles[_currentIndex]),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.logout_outlined),
+                onPressed: () async {
+                  await _authenticationService.logout();
+                },
+              ),
+            ],
+          ),
           body: _targetsScreens[_currentIndex],
           bottomNavigationBar: bottomNavigationBar,
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
