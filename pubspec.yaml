@@ -35,11 +35,19 @@ dependencies:
   rxdart: ^0.26.0
   provider: ^5.0.0
 
+  # Firebase
+  firebase_core: ^1.2.0
+  firebase_auth: ^1.2.0
+
+  email_validator: ^2.0.1
+
   package_info: ^2.0.0
 
   flutter_blue: ^0.8.0
 
   font_awesome_flutter: ^9.0.0
+  another_flushbar: ^1.10.22
+  top_snackbar_flutter: ^1.0.0
 
   tinycolor:
     git:
