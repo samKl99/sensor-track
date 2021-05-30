@@ -64,15 +64,15 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
       body: StreamBuilder<bool>(
         stream: _sensorService.searching,
         builder: (context, searchingSnapshot) {
-          return StreamBuilder<List<Sensor>>(
-            stream: _sensorService.sensors,
+          return StreamBuilder<Sensor?>(
+            stream: _sensorService.singleSensor,
             builder: (context, snapshot) {
               if (searchingSnapshot.connectionState == ConnectionState.waiting ||
                   snapshot.connectionState == ConnectionState.waiting ||
                   searchingSnapshot.data != null && searchingSnapshot.data!) {
                 return readSensorDataLoadingWidget;
-              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                final sensor = snapshot.data!.first;
+              } else if (snapshot.hasData) {
+                final sensor = snapshot.data!;
                 return Column(
                   children: [
                     Expanded(

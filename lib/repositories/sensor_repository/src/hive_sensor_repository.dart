@@ -46,9 +46,17 @@ class HiveSensorRepository implements SensorRepository {
   }
 
   @override
-  Future<Sensor?> sensorById(final String? id) async {
+  Future<Sensor?> sensorById(final String id) async {
     final _sensorBox = await Hive.openBox(SENSOR_HIVE_BOX_KEY);
+    //await _sensorBox.clear();
     final sensor = _sensorBox.values.firstWhereOrNull((element) => element.id == id);
+    return sensor != null ? Sensor.fromEntity(sensor) : null;
+  }
+
+  @override
+  Future<Sensor?> sensorByMacAddress(final String macAddress) async {
+    final _sensorBox = await Hive.openBox(SENSOR_HIVE_BOX_KEY);
+    final sensor = _sensorBox.values.firstWhereOrNull((element) => element.macAddress == macAddress);
     return sensor != null ? Sensor.fromEntity(sensor) : null;
   }
 }

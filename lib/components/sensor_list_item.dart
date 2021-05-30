@@ -5,13 +5,13 @@ import 'package:sensor_track/style/style.dart';
 
 class SensorListItem extends StatelessWidget {
   final Sensor sensor;
-  final bool hideTrailingIcon;
+  final Widget? trailingWidget;
   final VoidCallback? onTap;
 
   const SensorListItem({
     required this.sensor,
     this.onTap,
-    this.hideTrailingIcon = false,
+    this.trailingWidget,
   });
 
   @override
@@ -40,24 +40,17 @@ class SensorListItem extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        onTap: onTap,
-        leading: sensor.logoURL != null ? RoundImage(sensor.logoURL!) : null,
-        trailing: !hideTrailingIcon
-            ? IconButton(
-                icon: sensor.persisted != null && sensor.persisted!
-                    ? Icon(
-                        Icons.star_rounded,
-                        color: Theme.of(context).accentColor,
-                        size: 28.0,
-                      )
-                    : const Icon(
-                        Icons.star_border_rounded,
-                        color: Colors.white,
-                        size: 28.0,
-                      ),
-                onPressed: onTap,
+        subtitle: sensor.iotaDeviceData != null
+            ? Text(
+                sensor.iotaDeviceData!.sensorId ?? "",
+                style: TextStyle(
+                  color: Colors.white,
+                ),
               )
             : null,
+        onTap: onTap,
+        leading: sensor.logoURL != null ? RoundImage(sensor.logoURL!) : null,
+        trailing: trailingWidget,
       ),
     );
   }

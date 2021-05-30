@@ -6,7 +6,7 @@ class SensorTrackButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Color? color;
   final bool? loading;
-  final Icon? icon;
+  final Widget? icon;
 
   const SensorTrackButton({
     Key? key,

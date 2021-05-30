@@ -1,14 +1,15 @@
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/scan_card_item.dart';
 import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
+import 'package:sensor_track/services/notification_service.dart';
 import 'package:sensor_track/services/scan_service.dart';
 
 class LastScansScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scanService = Provider.of<ScanService>(context, listen: false)..getLastScans();
+
     return StreamBuilder<bool>(
       stream: scanService.scansLoading,
       builder: (context, loadingSnapshot) {
@@ -58,41 +59,43 @@ class LastScansScreen extends StatelessWidget {
   }
 
   Future<void> _onDeleteScan(final BuildContext context, final Scan scan) async {
-    AwesomeDialog(
-      context: context,
-      dialogType: DialogType.WARNING,
-      animType: AnimType.SCALE,
-      headerAnimationLoop: false,
-      dialogBackgroundColor: Theme.of(context).primaryColor,
-      body: Column(
-        children: [
-          const SizedBox(
-            height: 8.0,
+    final notificationService = Provider.of<NotificationService>(context, listen: false);
+
+    final dialogBody = Column(
+      children: [
+        const SizedBox(
+          height: 8.0,
+        ),
+        const Text(
+          "Scan löschen",
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
-          const Text(
-            "Scan löschen",
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(
-            height: 12.0,
-          ),
-          const Text("Möchtest du diesen Scan wirklich löschen?"),
-          const SizedBox(
-            height: 12.0,
-          ),
-        ],
-      ),
-      btnCancelText: "Abbrechen",
-      btnOkText: "Löschen",
-      btnCancelOnPress: () {},
-      btnOkOnPress: () async {
-        final scanService = Provider.of<ScanService>(context, listen: false);
-        await scanService.deleteScan(scan);
-        scanService.getLastScans();
-      },
-    )..show();
+        ),
+        const SizedBox(
+          height: 12.0,
+        ),
+        const Text("Möchtest du diesen Scan wirklich löschen?"),
+        const SizedBox(
+          height: 12.0,
+        ),
+      ],
+    );
+
+    final onOkPressed = () async {
+      final scanService = Provider.of<ScanService>(context, listen: false);
+      await scanService.deleteScan(scan);
+      scanService.getLastScans();
+    };
+
+    notificationService.presentWarningDialog(
+      context,
+      dialogBody,
+      onOkPressed,
+      () {},
+      "Abbrechen",
+      "Löschen",
+    );
   }
 }

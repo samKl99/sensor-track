@@ -12,16 +12,23 @@ class AuthScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authenticationService = Provider.of<AuthenticationService>(context);
 
-    return StreamBuilder(
-      stream: authenticationService.user,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return SplashScreen();
-        } else if (snapshot.hasData) {
-          return HomeScreen();
-        } else {
-          return LoginScreen();
-        }
+    return StreamBuilder<bool>(
+      stream: authenticationService.isAuthenticating,
+      builder: (context, loadingSnapshot) {
+        return StreamBuilder(
+          stream: authenticationService.user,
+          builder: (context, snapshot) {
+            if (loadingSnapshot.connectionState == ConnectionState.waiting ||
+                snapshot.connectionState == ConnectionState.waiting ||
+                loadingSnapshot.data != null && loadingSnapshot.data!) {
+              return SplashScreen();
+            } else if (snapshot.hasData) {
+              return HomeScreen();
+            } else {
+              return LoginScreen();
+            }
+          },
+        );
       },
     );
   }

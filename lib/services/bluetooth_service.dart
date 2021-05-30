@@ -11,10 +11,11 @@ class BluetoothService extends Bloc {
     _flutterBlue = FlutterBlue.instance;
   }
 
-  Future<void> startScan() async {
+  Future<void> startScan({final Duration? timeout}) async {
+    await _flutterBlue.stopScan();
     await _flutterBlue.startScan(
       scanMode: ScanMode.lowPower,
-      timeout: Duration(seconds: 10),
+      timeout: timeout ?? Duration(seconds: 10),
     );
   }
 

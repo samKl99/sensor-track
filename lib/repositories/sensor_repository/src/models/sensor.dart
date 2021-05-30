@@ -1,3 +1,4 @@
+import 'package:sensor_track/repositories/iota_repository/iota_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/entities/sensor_entity.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/models/sensor_type.dart';
 import 'package:uuid/uuid.dart';
@@ -7,11 +8,14 @@ class Sensor {
   static const _TEXAS_INSTRUMENTS_SENSOR_IMAGE_URL = "assets/sensor-icons/texas_instruments.png";
 
   String? id;
+  String? iotaSk;
+  String? iotaDeviceId;
   SensorType? type;
   String? name;
   String? logoURL;
   String? macAddress;
-  bool? persisted;
+  bool? registeredOnDataMarketplace;
+  IotaDevice? iotaDeviceData;
 
   double? temperature;
   double? humidity;
@@ -19,13 +23,16 @@ class Sensor {
 
   Sensor({
     String? id,
-    bool? persisted,
+    bool? registeredOnDataMarketplace,
+    this.iotaSk,
+    this.iotaDeviceId,
     this.macAddress,
     this.type,
     this.name,
+    this.iotaDeviceData,
   }) {
     this.id = id ?? Uuid().v4();
-    this.persisted = persisted ?? false;
+    this.registeredOnDataMarketplace = registeredOnDataMarketplace ?? false;
 
     if (this.type == SensorType.RUUVI) {
       this.logoURL = _RUUVI_SENSOR_IMAGE_URL;
@@ -39,6 +46,8 @@ class Sensor {
       name: this.name,
       logoURL: this.logoURL,
       macAddress: this.macAddress,
+      iotaSk: this.iotaSk,
+      iotaDeviceId: this.iotaDeviceId,
     );
   }
 
@@ -48,7 +57,9 @@ class Sensor {
       type: entity.type,
       name: entity.name,
       macAddress: entity.macAddress,
-      persisted: true,
+      registeredOnDataMarketplace: true,
+      iotaSk: entity.iotaSk,
+      iotaDeviceId: entity.iotaDeviceId,
     );
   }
 }
