@@ -43,16 +43,16 @@ class SensorTrack extends StatelessWidget {
         Provider<HiveSensorRepository>(
           create: (_) => HiveSensorRepository(),
         ),
-        ProxyProvider<HiveScanRepository, ScanService>(
-          update: (context, repository, _) => ScanService(repository),
-          dispose: (context, service) => service.dispose(),
-        ),
         ProxyProvider2<IotaClient, FirebaseAuthenticationRepository, AuthenticationService>(
           update: (context, client, repository, _) => AuthenticationService(repository, client)..isUserAuthenticated(),
           //dispose: (context, service) => service.dispose(),
         ),
         ProxyProvider2<IotaClient, AuthenticationService, IotaService>(
           update: (context, client, authenticationService, _) => IotaService(client, authenticationService),
+          dispose: (context, service) => service.dispose(),
+        ),
+        ProxyProvider2<IotaService, HiveScanRepository, ScanService>(
+          update: (context, iotaService, repository, _) => ScanService(repository, iotaService),
           dispose: (context, service) => service.dispose(),
         ),
         ProxyProvider3<IotaService, HiveSensorRepository, BluetoothService, SensorService>(

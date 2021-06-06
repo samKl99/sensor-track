@@ -3,14 +3,22 @@ import 'package:uuid/uuid.dart';
 
 class Scan {
   String id;
+
+  // temperature in C
   final double? temperature;
+
+  // humidity in %
   final double? humidity;
+
+  // pressure in pa
   final int? pressure;
 
   /* acceleration x axis in mg */
   final int? accelerationX;
+
   /* acceleration y axis in mg */
   final int? accelerationY;
+
   /* acceleration z axis in mg */
   final int? accelerationZ;
 

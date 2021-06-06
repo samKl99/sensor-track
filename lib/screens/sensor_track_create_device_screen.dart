@@ -35,7 +35,7 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
   final TextEditingController _lonController = TextEditingController();
   final TextEditingController _priceOfDataStreamController = TextEditingController();
 
-  final List<IotaDataType> _dataFields = [IotaDataType()];
+  late List<IotaDataType> _dataFields;
 
   IotaService get _iotaService => Provider.of<IotaService>(context, listen: false);
 
@@ -50,6 +50,8 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
   @override
   void initState() {
     _isSavingSensor = false;
+
+    _dataFields = _sensorService.getAllowedDataTypes();
 
     super.initState();
   }
@@ -118,32 +120,18 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
               ),
               _priceOfDataStreamTextField,
               const SizedBox(
-                height: 16.0,
+                height: 20.0,
               ),
               // data fields
               Padding(
                 padding: const EdgeInsets.only(left: 3.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     const Text(
                       "Datenfelder:",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    CircleAvatar(
-                      backgroundColor: Colors.green,
-                      child: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _dataFields.add(IotaDataType());
-                          });
-                        },
-                        color: Colors.white,
-                        icon: Icon(
-                          Icons.add,
-                        ),
                       ),
                     ),
                   ],
@@ -152,43 +140,9 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
               const SizedBox(
                 height: 16.0,
               ),
-              SizedBox(
-                height: 220,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  itemBuilder: (context, index) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: SensorTrackDataFieldListItem(
-                      dataType: _dataFields[index],
-                      onRemoveTap: () {
-                        setState(() {
-                          _dataFields.removeAt(index);
-                        });
-                      },
-                      onFieldIdChanged: (value) {
-                        setState(() {
-                          _dataFields[index].id = value;
-                        });
-                      },
-                      onFieldNameChanged: (value) {
-                        setState(() {
-                          _dataFields[index].name = value;
-                        });
-                      },
-                      onFieldUnitChanged: (value) {
-                        setState(() {
-                          _dataFields[index].unit = value;
-                        });
-                      },
-                      showRemoveButton: index != 0,
-                    ),
-                  ),
-                  itemCount: _dataFields.length,
-                ),
-              ),
+              ..._allowedDataFieldItems,
               const SizedBox(
-                height: 16.0,
+                height: 24.0,
               ),
               _registerSensorButton,
               const SizedBox(
@@ -297,6 +251,24 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
         },
       );
 
+  List<Widget> get _allowedDataFieldItems {
+    return _dataFields
+        .map((e) => CheckboxListTile(
+            title: Text(
+              "${e.name} in ${e.unit}",
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            value: e.active,
+            onChanged: (value) {
+              setState(() {
+                e.active = !e.active;
+              });
+            }))
+        .toList();
+  }
+
   Widget get _registerSensorButton => SensorTrackButton(
         text: "Sensor registrieren",
         textStyle: const TextStyle(fontSize: 18.0),
@@ -321,7 +293,7 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
           city: _cityController.text.trim(),
           country: _countryController.text.trim(),
         ),
-        dataTypes: _dataFields,
+        dataTypes: _dataFields.where((element) => element.active).toList(),
       );
       try {
         setState(() {

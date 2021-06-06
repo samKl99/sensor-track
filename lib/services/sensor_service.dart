@@ -1,6 +1,7 @@
 import 'package:flutter_blue/flutter_blue.dart' as blue;
 import 'package:rxdart/rxdart.dart';
 import 'package:sensor_track/models/tag_manufacturer.dart';
+import 'package:sensor_track/repositories/iota_repository/iota_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/models/ruuvi_sensor_device.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/sensor_repository.dart';
@@ -64,7 +65,10 @@ class SensorService extends Bloc {
       final persistedSensors = await _sensorRepository.sensors(limit: limit);
       final filteredSensors = persistedSensors.where((element) => iotaSensorsSks.contains(element.iotaSk)).toList();
       filteredSensors.forEach((sensor) {
-        sensor.iotaDeviceData = iotaSensorDevices.firstWhereOrNull((iotaDevice) => iotaDevice.sk == sensor.iotaSk);
+        final iotaSensorData = iotaSensorDevices.firstWhereOrNull((iotaDevice) => iotaDevice.sk == sensor.iotaSk);
+        sensor.iotaSk = iotaSensorData?.sk;
+        sensor.iotaDeviceId = iotaSensorData!.sensorId;
+        sensor.iotaDeviceData = iotaSensorData;
       });
       _registeredSensors.add(filteredSensors);
     } catch (e) {
@@ -75,10 +79,17 @@ class SensorService extends Bloc {
     }
   }
 
-  void listenByDeviceId(final String macAddress) {
-    _searching.add(true);
-    _sensors.add([]);
+  void listenByDeviceId(final String macAddress, {final bool showLoadingSpinner = true}) {
+    if (showLoadingSpinner) {
+      _searching.add(true);
+      _sensors.add([]);
+    }
+
     _bluetoothService.listenByDeviceId(macAddress).listen((result) => _listenOnSingleSensorDevice(result));
+  }
+
+  Future<void> stopListenByDeviceId() async {
+    await _bluetoothService.stopScan();
   }
 
   Future<void> addSensor(final Sensor sensor) async {
@@ -90,9 +101,17 @@ class SensorService extends Bloc {
   }
 
   Future<void> deleteSensor(final Sensor sensor) async {
-    await _sensorRepository.deleteSensorById(sensor.id!);
-    if (sensor.iotaDeviceId != null) {
-      await _iotaService.deleteDevice(sensor.iotaDeviceId!);
+    _loading.add(true);
+
+    try {
+      await _sensorRepository.deleteSensorById(sensor.id!);
+      if (sensor.iotaDeviceId != null) {
+        await _iotaService.deleteDevice(sensor.iotaDeviceId!);
+      }
+    } catch (e) {
+      rethrow;
+    } finally {
+      _loading.add(false);
     }
   }
 
@@ -108,6 +127,14 @@ class SensorService extends Bloc {
       return false;
     }
     return await _sensorRepository.sensorByMacAddress(macAddress) != null;
+  }
+
+  List<IotaDataType> getAllowedDataTypes() {
+    return [
+      IotaDataType(id: "temp", name: "Temperatur", unit: "C"),
+      IotaDataType(id: "hum", unit: "%", name: "Luftfeuchtigkeit"),
+      IotaDataType(id: "press", unit: "pa", name: "Luftdruck"),
+    ];
   }
 
   Future<void> _listenOnSensorDevices(final List<blue.ScanResult> results) async {

@@ -4,14 +4,18 @@ part 'iota_data_type.g.dart';
 
 @JsonSerializable()
 class IotaDataType {
-  String? id;
-  String? unit;
-  String? name;
+  final String id;
+  final String unit;
+  final String name;
+
+  @JsonKey(ignore: true)
+  bool active;
 
   IotaDataType({
-    this.id,
-    this.unit,
-    this.name,
+    required this.id,
+    required this.unit,
+    required this.name,
+    this.active = true,
   });
 
   factory IotaDataType.fromJson(Map<String, dynamic> json) => _$IotaDataTypeFromJson(json);
