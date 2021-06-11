@@ -75,7 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ? FloatingActionButton(
                   key: _fabButtonKey,
                   child: Icon(Icons.add),
-                  onPressed: () => _startPageTransition(),
+                  //onPressed: () => _startPageTransition(),
+                  onPressed: (){
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => ScanScreen()));
+                  },
                 )
               : null,
         ),

@@ -1,54 +1,95 @@
 import 'package:flutter_blue/flutter_blue.dart' as blue;
 import 'package:rxdart/rxdart.dart';
 import 'package:sensor_track/models/tag_manufacturer.dart';
+import 'package:sensor_track/repositories/iota_repository/iota_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/models/ruuvi_sensor_device.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/sensor_repository.dart';
 import 'package:sensor_track/services/bloc.dart';
 import 'package:sensor_track/services/bluetooth_service.dart' as sensorTrack;
+import 'package:sensor_track/services/iota_service.dart';
+import 'package:collection/collection.dart';
+import 'dart:async';
 
 class SensorService extends Bloc {
+  static const SEARCH_DURATION = Duration(seconds: 10);
+
   Stream<List<Sensor>> get sensors => _sensors.stream;
+
+  Stream<List<Sensor>> get registeredSensors => _registeredSensors.stream;
+
+  Stream<Sensor?> get singleSensor => _singleSensor.stream;
 
   Stream<bool> get loading => _loading.stream;
 
   Stream<bool> get searching => _searching.stream;
 
   final _sensors = BehaviorSubject<List<Sensor>>.seeded([]);
+  final _registeredSensors = BehaviorSubject<List<Sensor>>.seeded([]);
+  final _singleSensor = BehaviorSubject<Sensor?>.seeded(null);
   final _loading = BehaviorSubject<bool>.seeded(false);
   final _searching = BehaviorSubject<bool>.seeded(false);
 
   SensorRepository _sensorRepository;
   sensorTrack.BluetoothService _bluetoothService;
+  IotaService _iotaService;
 
-  SensorService(this._sensorRepository, this._bluetoothService);
+  SensorService(this._sensorRepository, this._bluetoothService, this._iotaService);
 
   searchSensors() {
     _searching.add(true);
     _sensors.add([]);
-    _bluetoothService.startScan();
+    _bluetoothService.startScan(timeout: SEARCH_DURATION);
     _bluetoothService.scanResults.listen((results) => _listenOnSensorDevices(results));
+
+    int durationSeconds = SEARCH_DURATION.inSeconds;
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (durationSeconds == 0) {
+        stopSearchingSensors();
+        timer.cancel();
+      } else {
+        durationSeconds--;
+      }
+    });
   }
 
   stopSearchingSensors() {
     _bluetoothService.stopScan();
   }
 
-  Future<void> getSavedSensors({int limit = 15}) async {
+  Future<void> getRegisteredSensors({int limit = 15}) async {
     _loading.add(true);
     try {
-      _sensors.add(await _sensorRepository.sensors(limit: limit));
+      final iotaSensorDevices = await _iotaService.getUserDevices();
+      final iotaSensorsSks = iotaSensorDevices.map((e) => e.sk);
+      final persistedSensors = await _sensorRepository.sensors(limit: limit);
+      final filteredSensors = persistedSensors.where((element) => iotaSensorsSks.contains(element.iotaSk)).toList();
+      filteredSensors.forEach((sensor) {
+        final iotaSensorData = iotaSensorDevices.firstWhereOrNull((iotaDevice) => iotaDevice.sk == sensor.iotaSk);
+        sensor.iotaSk = iotaSensorData?.sk;
+        sensor.iotaDeviceId = iotaSensorData!.sensorId;
+        sensor.iotaDeviceData = iotaSensorData;
+      });
+      _registeredSensors.add(filteredSensors);
     } catch (e) {
-      _sensors.addError("error loading sensors");
+      print(e);
+      _registeredSensors.addError("error loading sensors");
     } finally {
       _loading.add(false);
     }
   }
 
-  void listenByDeviceId(final String macAddress) {
-    _searching.add(true);
-    _sensors.add([]);
+  void listenByDeviceId(final String macAddress, {final bool showLoadingSpinner = true}) {
+    if (showLoadingSpinner) {
+      _searching.add(true);
+      _sensors.add([]);
+    }
+
     _bluetoothService.listenByDeviceId(macAddress).listen((result) => _listenOnSingleSensorDevice(result));
+  }
+
+  Future<void> stopListenByDeviceId() async {
+    await _bluetoothService.stopScan();
   }
 
   Future<void> addSensor(final Sensor sensor) async {
@@ -59,26 +100,63 @@ class SensorService extends Bloc {
     await _sensorRepository.addSensor(sensor);
   }
 
-  Future<void> deleteSensorById(final String id) async {
-    await _sensorRepository.deleteSensorById(id);
+  Future<void> deleteSensor(final Sensor sensor) async {
+    _loading.add(true);
+
+    try {
+      await _sensorRepository.deleteSensorById(sensor.id!);
+      if (sensor.iotaDeviceId != null) {
+        await _iotaService.deleteDevice(sensor.iotaDeviceId!);
+      }
+    } catch (e) {
+      rethrow;
+    } finally {
+      _loading.add(false);
+    }
   }
 
   Future<bool> isSensorPersisted(final String? id) async {
+    if (id == null) {
+      return false;
+    }
     return await _sensorRepository.sensorById(id) != null;
+  }
+
+  Future<bool> isSensorPersistedByMacAddress(final String? macAddress) async {
+    if (macAddress == null) {
+      return false;
+    }
+    return await _sensorRepository.sensorByMacAddress(macAddress) != null;
+  }
+
+  List<IotaDataType> getAllowedDataTypes() {
+    return [
+      IotaDataType(id: "temp", name: "Temperatur", unit: "C"),
+      IotaDataType(id: "hum", unit: "%", name: "Luftfeuchtigkeit"),
+      IotaDataType(id: "press", unit: "pa", name: "Luftdruck"),
+    ];
   }
 
   Future<void> _listenOnSensorDevices(final List<blue.ScanResult> results) async {
     final devices = _getDevices(results);
 
     if (devices.isNotEmpty) {
-      devices.map((e) async => await isSensorPersisted(e.id) ? e.persisted = true : e.persisted = false).toList();
-      _sensors.add(devices);
+      final registeredDevices = await Future.wait(devices.map((e) async {
+        await isSensorPersistedByMacAddress(e.macAddress) ? e.registeredOnDataMarketplace = true : e.registeredOnDataMarketplace = false;
+        return e;
+      }).toList());
+
+      _sensors.add(registeredDevices.where((element) => element.registeredOnDataMarketplace == false).toList());
       _searching.add(false);
     }
   }
 
   void _listenOnSingleSensorDevice(final blue.ScanResult result) {
-    _listenOnSensorDevices([result]);
+    final devices = _getDevices([result]);
+    if (devices.isNotEmpty) {
+      _singleSensor.add(devices.first);
+      _searching.add(false);
+    }
   }
 
   List<Sensor> _getDevices(final List<blue.ScanResult> results) {
@@ -116,6 +194,12 @@ class SensorService extends Bloc {
   dispose() {
     _sensors.drain();
     _sensors.close();
+
+    _registeredSensors.drain();
+    _registeredSensors.close();
+
+    _singleSensor.drain();
+    _singleSensor.close();
 
     _loading.drain();
     _loading.close();

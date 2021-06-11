@@ -2,38 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_list_item.dart';
 import 'package:sensor_track/components/sensor_track_app_bar.dart';
+import 'package:sensor_track/screens/sensor_track_create_device_screen.dart';
 import 'package:sensor_track/components/sensor_track_loading_widget.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/services/sensor_service.dart';
 import 'package:sensor_track/style/style.dart';
 
-class ScanScreen extends StatefulWidget {
-  @override
-  _ScanScreenState createState() => _ScanScreenState();
-}
-
-class _ScanScreenState extends State<ScanScreen> {
-  late SensorService _sensorService;
-
-  @override
-  void initState() {
-    _sensorService = Provider.of<SensorService>(context, listen: false)..searchSensors();
-    super.initState();
-  }
-
+class ScanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final sensorService = Provider.of<SensorService>(context);
+    final SensorService sensorService = Provider.of<SensorService>(context, listen: false)..searchSensors();
 
     return Scaffold(
       appBar: SensorTrackAppBar(
         title: const Text("Scannen"),
       ),
       body: StreamBuilder<bool>(
-        stream: _sensorService.searching,
+        stream: sensorService.searching,
         builder: (context, searchingSnapshot) {
           return StreamBuilder<List<Sensor>>(
-            stream: _sensorService.sensors,
+            stream: sensorService.sensors,
             builder: (context, snapshot) {
               if (searchingSnapshot.connectionState == ConnectionState.waiting ||
                   snapshot.connectionState == ConnectionState.waiting ||
@@ -46,19 +34,20 @@ class _ScanScreenState extends State<ScanScreen> {
                     final sensorDevice = sensorDevices[index];
                     return SensorListItem(
                       sensor: sensorDevice,
-                      onTap: () async {
-                        if (await sensorService.isSensorPersisted(sensorDevice.id)) {
-                          await sensorService.deleteSensorById(sensorDevice.id!);
-                          setState(() {
-                            sensorDevice.persisted = false;
-                          });
-                        } else {
-                          await sensorService.addSensor(sensorDevice);
-                          setState(() {
-                            sensorDevice.persisted = true;
-                          });
-                        }
-                      },
+                      trailingWidget: CircleAvatar(
+                        backgroundColor: Colors.green,
+                        radius: 19.0,
+                        child: IconButton(
+                          onPressed: () {
+                            _registerOnDataMarketplace(context, sensorService, sensorDevice);
+                          },
+                          color: Colors.white,
+                          icon: Icon(
+                            Icons.add,
+                            size: 19.0,
+                          ),
+                        ),
+                      ),
                     );
                   },
                   itemCount: sensorDevices.length,
@@ -89,12 +78,15 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
-  @override
-  void dispose() async {
-    // refresh sensors
-    _sensorService.getSavedSensors();
+  _registerOnDataMarketplace(final BuildContext context, final SensorService sensorService, final Sensor sensor) async {
+    sensorService.stopSearchingSensors();
 
-    _sensorService.stopSearchingSensors();
-    super.dispose();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SensorTrackCreateDeviceScreen(
+          sensor: sensor,
+        ),
+      ),
+    );
   }
 }

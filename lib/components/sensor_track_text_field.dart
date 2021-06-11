@@ -14,6 +14,7 @@ class SensorTrackTextField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final TextStyle? hintStyle;
   final TextInputType? keyBoardType;
+  final TextCapitalization? textCapitalization;
 
   const SensorTrackTextField({
     this.hint,
@@ -29,6 +30,7 @@ class SensorTrackTextField extends StatelessWidget {
     this.validator,
     this.hintStyle,
     this.keyBoardType,
+    this.textCapitalization,
   });
 
   @override
@@ -43,7 +45,7 @@ class SensorTrackTextField extends StatelessWidget {
               const Radius.circular(20.0),
             ),
           ),
-          contentPadding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+          contentPadding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
           filled: true,
           hintText: hint,
           hintStyle: hintStyle,
@@ -63,6 +65,7 @@ class SensorTrackTextField extends StatelessWidget {
         readOnly: readOnly ?? false,
         textInputAction: textInputAction,
         keyboardType: keyBoardType ?? TextInputType.text,
+        textCapitalization: textCapitalization ?? TextCapitalization.none,
         focusNode: focusNode,
         onFieldSubmitted: onFieldSubmitted,
         onTap: onTap,

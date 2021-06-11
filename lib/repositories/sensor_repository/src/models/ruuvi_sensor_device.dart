@@ -27,6 +27,6 @@ class RuuviSensorDevice extends Sensor {
 
   @override
   String toString() {
-    return "RuuviSensorDevice: { id: $id, name: $name, persisted: $persisted, macAddress: $macAddress, temperature: $temperature, humidity: $humidity, pressure: $pressure, acceleration: $acceleration, powerInfo: $powerInfo }";
+    return "RuuviSensorDevice: { id: $id, name: $name, persisted: $registeredOnDataMarketplace, macAddress: $macAddress, temperature: $temperature, humidity: $humidity, pressure: $pressure, acceleration: $acceleration, powerInfo: $powerInfo }";
   }
 }

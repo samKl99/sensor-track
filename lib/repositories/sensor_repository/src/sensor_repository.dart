@@ -11,5 +11,7 @@ abstract class SensorRepository {
 
   Future<void> updateSensor(Sensor oldSensor, Sensor newSensor);
 
-  Future<Sensor?> sensorById(String? id);
+  Future<Sensor?> sensorById(String id);
+
+  Future<Sensor?> sensorByMacAddress(String macAddress);
 }

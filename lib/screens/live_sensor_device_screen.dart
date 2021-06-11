@@ -47,9 +47,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     _sensorService = Provider.of<SensorService>(context, listen: false);
     _scanService = Provider.of<ScanService>(context, listen: false);
 
-    if (widget.sensor.macAddress != null) {
-      _sensorService.listenByDeviceId(widget.sensor.macAddress!);
-    }
+    _startListenById();
 
     _setButtonThemeDefault(false);
     super.didChangeDependencies();
@@ -64,15 +62,15 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
       body: StreamBuilder<bool>(
         stream: _sensorService.searching,
         builder: (context, searchingSnapshot) {
-          return StreamBuilder<List<Sensor>>(
-            stream: _sensorService.sensors,
+          return StreamBuilder<Sensor?>(
+            stream: _sensorService.singleSensor,
             builder: (context, snapshot) {
               if (searchingSnapshot.connectionState == ConnectionState.waiting ||
                   snapshot.connectionState == ConnectionState.waiting ||
                   searchingSnapshot.data != null && searchingSnapshot.data!) {
                 return readSensorDataLoadingWidget;
-              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                final sensor = snapshot.data!.first;
+              } else if (snapshot.hasData) {
+                final sensor = snapshot.data!;
                 return Column(
                   children: [
                     Expanded(
@@ -106,6 +104,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
                                   await _saveScan(sensor);
                                 }
                               : null,
+                          loading: _isSaving,
                           color: _buttonColor,
                           icon: _buttonIcon,
                         ),
@@ -129,6 +128,12 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     );
   }
 
+  _startListenById({final bool showLoadingSpinner = true}) {
+    if (widget.sensor.macAddress != null) {
+      _sensorService.listenByDeviceId(widget.sensor.macAddress!, showLoadingSpinner: showLoadingSpinner);
+    }
+  }
+
   _saveScan(final Sensor sensor) async {
     setState(() {
       _isSaving = true;
@@ -143,15 +148,23 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
       createdAt: DateTime.now(),
     );
 
-    await _scanService.addScan(scan);
-    _setButtonThemeSavedSuccessfully();
-
-    Timer(Duration(milliseconds: 3000), () {
-      _setButtonThemeDefault(true);
-
+    try {
+      await _sensorService.stopListenByDeviceId();
+      await _scanService.addScan(widget.sensor, scan);
+      _setButtonThemeSavedSuccessfully();
+    } catch (e) {
+      _setButtonThemeSaveError();
+    } finally {
       setState(() {
         _isSaving = false;
       });
+    }
+
+    Timer(Duration(milliseconds: 3000), () {
+      if (mounted) {
+        _startListenById(showLoadingSpinner: false);
+        _setButtonThemeDefault(true);
+      }
     });
   }
 
@@ -163,6 +176,17 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
         color: Colors.white,
       );
       _buttonText = "Scan gespeichert";
+    });
+  }
+
+  void _setButtonThemeSaveError() {
+    setState(() {
+      _buttonColor = Colors.red;
+      _buttonIcon = const Icon(
+        Icons.close,
+        color: Colors.white,
+      );
+      _buttonText = "Fehler beim Speichern";
     });
   }
 

@@ -1,10 +1,11 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_track_button.dart';
 import 'package:sensor_track/components/sensor_track_text_field.dart';
 import 'package:sensor_track/services/authentication_service.dart';
-import 'package:sensor_track/services/snackbar_service.dart';
+import 'package:sensor_track/services/notification_service.dart';
 import 'package:sensor_track/style/style.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -34,6 +35,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   AuthenticationService get _authenticationService => Provider.of<AuthenticationService>(context, listen: false);
+
+  NotificationService get _notificationService => Provider.of<NotificationService>(context, listen: false);
 
   @override
   void initState() {
@@ -82,6 +85,10 @@ class _LoginScreenState extends State<LoginScreen> {
             height: 40.0,
           ),
           submitButton,
+          const SizedBox(
+            height: 16.0,
+          ),
+          loginWithGoogleButton,
           const SizedBox(
             height: 16.0,
           ),
@@ -141,6 +148,23 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: _changeLoginFlow,
       );
 
+  Widget get loginWithGoogleButton => SensorTrackButton(
+        icon: Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: SvgPicture.asset(
+            "assets/icons/google.svg",
+            width: 25.0,
+            height: 25.0,
+          ),
+        ),
+        text: "Login mit Google",
+        textStyle: const TextStyle(
+          fontSize: 18.0,
+        ),
+        color: primaryColorLight,
+        onPressed: _authenticateWithGoogle,
+      );
+
   Future<void> _authenticateWithCredentials() async {
     try {
       setState(() {
@@ -155,11 +179,19 @@ class _LoginScreenState extends State<LoginScreen> {
         await _authenticationService.register(email, password);
       }
     } catch (e) {
-      SnackBarService.showErrorSnackBar(context, "${_isLoginFlow ? "Login" : "Registrierung"} fehlgeschlagen");
+      _notificationService.showErrorSnackBar(context, "${_isLoginFlow ? "Login" : "Registrierung"} fehlgeschlagen");
     } finally {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _authenticateWithGoogle() async {
+    try {
+      await _authenticationService.loginWithGoogle();
+    } catch (e) {
+      _notificationService.showErrorSnackBar(context, "Google Login fehlgeschlagen");
     }
   }
 

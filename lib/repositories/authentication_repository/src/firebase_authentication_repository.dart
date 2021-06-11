@@ -2,6 +2,7 @@ import 'package:sensor_track/repositories/authentication_repository/src/authenti
 import 'package:sensor_track/repositories/authentication_repository/src/models/user.dart';
 
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthenticationRepository implements AuthenticationRepository {
   final firebase_auth.FirebaseAuth _firebaseAuth;
@@ -54,6 +55,26 @@ class FirebaseAuthenticationRepository implements AuthenticationRepository {
       }
     } catch (e) {
       throw RegistrationException();
+    }
+  }
+
+  @override
+  Future<void> loginWithGoogle() async {
+    final googleSignIn = GoogleSignIn();
+    // Trigger the authentication flow
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+
+    // Create a new credential
+    if (googleAuth != null) {
+      final credential = firebase_auth.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await _firebaseAuth.signInWithCredential(credential);
     }
   }
 }
