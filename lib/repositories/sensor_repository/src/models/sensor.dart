@@ -29,6 +29,9 @@ class Sensor {
     this.macAddress,
     this.type,
     this.name,
+    this.temperature,
+    this.humidity,
+    this.pressure,
     this.iotaDeviceData,
   }) {
     this.id = id ?? Uuid().v4();
@@ -36,6 +39,10 @@ class Sensor {
 
     if (this.type == SensorType.RUUVI) {
       this.logoURL = _RUUVI_SENSOR_IMAGE_URL;
+    }
+
+    if (this.type == SensorType.TEXAS_INSTRUMENTS) {
+      this.logoURL = _TEXAS_INSTRUMENTS_SENSOR_IMAGE_URL;
     }
   }
 

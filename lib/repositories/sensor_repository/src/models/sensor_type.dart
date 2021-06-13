@@ -6,6 +6,10 @@ part 'sensor_type.g.dart';
 enum SensorType {
   @HiveField(0)
   UNKOWN,
+
   @HiveField(1)
-  RUUVI
+  RUUVI,
+
+  @HiveField(2)
+  TEXAS_INSTRUMENTS
 }

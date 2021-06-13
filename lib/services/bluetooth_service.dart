@@ -23,8 +23,12 @@ class BluetoothService extends Bloc {
     await _flutterBlue.stopScan();
   }
 
-  Stream<ScanResult> listenByDeviceId(final String macAddress) {
+  Stream<ScanResult> listenByDeviceMacAddress(final String macAddress) {
     return _flutterBlue.scan(withDevices: [Guid.fromMac(macAddress)]);
+  }
+
+  Stream<ScanResult> listenByDeviceId(final String id) {
+    return _flutterBlue.scan().where((result) => result.device.id.id == id);
   }
 
   @override

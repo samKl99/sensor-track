@@ -3,7 +3,10 @@ import 'package:rxdart/rxdart.dart';
 import 'package:sensor_track/models/tag_manufacturer.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/models/ruuvi_sensor_device.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/models/sensor_type.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/models/texas_instruments_sensor_device.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/sensor_repository.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/texas_instruments/texas_instruments_service.dart';
 import 'package:sensor_track/services/bloc.dart';
 import 'package:sensor_track/services/bluetooth_service.dart' as sensorTrack;
 import 'package:sensor_track/services/iota_service.dart';
@@ -29,11 +32,14 @@ class SensorService extends Bloc {
   final _loading = BehaviorSubject<bool>.seeded(false);
   final _searching = BehaviorSubject<bool>.seeded(false);
 
+  final Set<blue.BluetoothDevice> _connectedDevices = Set();
+
   SensorRepository _sensorRepository;
   sensorTrack.BluetoothService _bluetoothService;
   IotaService _iotaService;
+  TexasInstrumentsService _texasInstrumentsService;
 
-  SensorService(this._sensorRepository, this._bluetoothService, this._iotaService);
+  SensorService(this._sensorRepository, this._bluetoothService, this._iotaService, this._texasInstrumentsService);
 
   searchSensors() {
     _searching.add(true);
@@ -54,6 +60,11 @@ class SensorService extends Bloc {
 
   stopSearchingSensors() {
     _bluetoothService.stopScan();
+    _connectedDevices.forEach((element) {
+      element.disconnect();
+    });
+    _searching.add(false);
+    _singleSensor.add(null);
   }
 
   Future<void> getRegisteredSensors({int limit = 15}) async {
@@ -78,13 +89,51 @@ class SensorService extends Bloc {
     }
   }
 
-  void listenByDeviceId(final String macAddress, {final bool showLoadingSpinner = true}) {
+  void listenRuuviDevice(final String macAddress, {final bool showLoadingSpinner = true}) {
     if (showLoadingSpinner) {
       _searching.add(true);
-      _sensors.add([]);
+      _singleSensor.add(null);
     }
 
-    _bluetoothService.listenByDeviceId(macAddress).listen((result) => _listenOnSingleSensorDevice(result));
+    _bluetoothService.listenByDeviceMacAddress(macAddress).listen((result) => _listenOnRuuviDevice(result));
+  }
+
+  void listenTexasInstrumentsDevice(final String id) async {
+    _searching.add(true);
+    _bluetoothService.listenByDeviceId(id).listen((result) async {
+      final device = result.device;
+
+      await device.connect();
+      _connectedDevices.add(device);
+
+      final temperatureStream = await _texasInstrumentsService.enableTemperature(device);
+      final humidityStream = await _texasInstrumentsService.enableHumidity(device);
+      final pressureStream = await _texasInstrumentsService.enablePressure(device);
+
+      if (temperatureStream != null && humidityStream != null && pressureStream != null) {
+        final combinedStream = Rx.zip3<double?, double?, int?, Set<TexasInstrumentsSensorDevice>>(
+            temperatureStream,
+            humidityStream,
+            pressureStream,
+            (temp, hum, press) => {
+                  TexasInstrumentsSensorDevice(
+                    id: device.id.id,
+                    name: device.name,
+                    temperature: temp,
+                    humidity: hum,
+                    pressure: press,
+                  )
+                });
+
+        combinedStream.listen((devices) {
+          final device = devices.first;
+          if (device.temperature != null && device.humidity != null && device.pressure != null) {
+            _singleSensor.add(device);
+            _searching.add(false);
+          }
+        });
+      }
+    });
   }
 
   Future<void> stopListenByDeviceId() async {
@@ -142,16 +191,19 @@ class SensorService extends Bloc {
     }
   }
 
-  void _listenOnSingleSensorDevice(final blue.ScanResult result) {
-    final devices = _getDevices([result]);
-    if (devices.isNotEmpty) {
-      _singleSensor.add(devices.first);
+  void _listenOnRuuviDevice(final blue.ScanResult result) {
+    final ruuviDevices = _getDevices([result]).where((element) => element.type == SensorType.RUUVI);
+    if (ruuviDevices.isNotEmpty) {
+      _singleSensor.add(ruuviDevices.first);
       _searching.add(false);
     }
   }
 
   List<Sensor> _getDevices(final List<blue.ScanResult> results) {
-    return [..._extractRuuviDevices(results)];
+    return [
+      ..._extractRuuviDevices(results),
+      ..._extractTISensorTagDevices(results),
+    ];
   }
 
   /* filter RuuviTags */
@@ -164,6 +216,17 @@ class SensorService extends Bloc {
               id: e.device.id.id,
               name: e.device.name.isNotEmpty ? e.device.name : null,
               data: e.advertisementData.manufacturerData[TagManufacturer.RUUVI_MANUFACTURER_ID],
+            ))
+        .toList();
+  }
+
+  List<Sensor> _extractTISensorTagDevices(final List<blue.ScanResult> results) {
+    final tiSensors = results.where((element) => element.device.name == "SensorTag" || element.device.name == "TI BLE Sensor Tag");
+
+    return tiSensors
+        .map((e) => TexasInstrumentsSensorDevice(
+              id: e.device.id.id,
+              name: e.device.name,
             ))
         .toList();
   }

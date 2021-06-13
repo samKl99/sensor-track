@@ -6,6 +6,7 @@ import 'package:sensor_track/repositories/authentication_repository/authenticati
 import 'package:sensor_track/repositories/iota_repository/src/iota_client.dart';
 import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/texas_instruments/texas_instruments_service.dart';
 import 'package:sensor_track/screens/auth_screen.dart';
 import 'package:sensor_track/screens/home_screen.dart';
 import 'package:sensor_track/screens/sensor_screen.dart';
@@ -27,6 +28,7 @@ class SensorTrack extends StatelessWidget {
       providers: [
         Provider<BluetoothService>(
           create: (_) => BluetoothService(),
+          lazy: false,
           dispose: (context, service) => service.dispose(),
         ),
         Provider<NotificationService>(
@@ -38,6 +40,9 @@ class SensorTrack extends StatelessWidget {
         Provider<LocationService>(
           create: (_) => LocationService(),
           lazy: false,
+        ),
+        Provider<TexasInstrumentsService>(
+          create: (_) => TexasInstrumentsService(),
         ),
         Provider<HiveScanRepository>(
           create: (_) => HiveScanRepository(),
@@ -60,8 +65,9 @@ class SensorTrack extends StatelessWidget {
           update: (context, iotaService, repository, _) => ScanService(repository, iotaService),
           dispose: (context, service) => service.dispose(),
         ),
-        ProxyProvider3<IotaService, HiveSensorRepository, BluetoothService, SensorService>(
-          update: (context, iotaService, repository, bluetoothService, _) => SensorService(repository, bluetoothService, iotaService),
+        ProxyProvider4<TexasInstrumentsService, IotaService, HiveSensorRepository, BluetoothService, SensorService>(
+          update: (context, texasInstrumentsService, iotaService, repository, bluetoothService, _) =>
+              SensorService(repository, bluetoothService, iotaService, texasInstrumentsService),
           dispose: (context, service) => service.dispose(),
         ),
       ],

@@ -58,7 +58,7 @@ class ScanService extends Bloc {
         pressure: 1753,
         createdAt: DateTime.now(),
         sensorDeviceName: index % 2 == 0 ? "Sensor 1" : "Sensor 2",
-        sensorDeviceLogoURL: index % 2 == 0 ? "assets/sensor-icons/ruuvi.png" : "assets/sensor-icons/texas_instruments.png",
+        sensorDeviceLogoURL: index % 2 == 0 ? "assets/sensor-icons/repositories.sensor_repository.src.ruuvi.png" : "assets/sensor-icons/texas_instruments.png",
       ),
     );
   }

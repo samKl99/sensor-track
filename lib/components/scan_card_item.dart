@@ -27,13 +27,19 @@ class ScanCardItem extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 1.0),
-                  child: Text(
-                    scan.sensorDeviceName != null ? scan.sensorDeviceName! : "",
-                    style: const TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white,
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 1.0),
+                    child: RichText(
+                      overflow: TextOverflow.ellipsis,
+                      strutStyle: const StrutStyle(fontSize: 12.0),
+                      text: TextSpan(
+                        text: scan.sensorDeviceName != null ? scan.sensorDeviceName! : "",
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -71,13 +77,13 @@ class ScanCardItem extends StatelessWidget {
   }
 
   Widget get _temperatureRow => _buildScanDataRow(FontAwesomeIcons.thermometerThreeQuarters, Colors.orange,
-      dataString: "${scan.temperature != null ? scan.temperature! : "-"} ${String.fromCharCode($deg)}C");
+      dataString: "${scan.temperature != null ? scan.temperature!.toStringAsFixed(2) : "-"} ${String.fromCharCode($deg)}C");
 
-  Widget get _humidityRow =>
-      _buildScanDataRow(FontAwesomeIcons.tint, Colors.blueAccent, dataString: "${scan.humidity != null ? scan.humidity! : "-"} %");
+  Widget get _humidityRow => _buildScanDataRow(FontAwesomeIcons.tint, Colors.blueAccent,
+      dataString: "${scan.humidity != null ? scan.humidity!.toStringAsFixed(2) : "-"} %");
 
   Widget get _pressureRow => _buildScanDataRow(FontAwesomeIcons.wind, Colors.white70,
-      dataString: "${scan.pressure != null ? ConverterUtil.fromPaToHPa(scan.pressure!) : "-"} hPa");
+      dataString: "${scan.pressure != null ? ConverterUtil.fromPaToHPa(scan.pressure!).toStringAsFixed(2) : "-"} hPa");
 
   Widget get _locationRow => _buildScanDataRow(
         FontAwesomeIcons.mapMarkerAlt,
