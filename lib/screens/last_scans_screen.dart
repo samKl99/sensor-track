@@ -25,6 +25,7 @@ class LastScansScreen extends StatelessWidget {
             } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
               return GridView.count(
                 crossAxisCount: 2,
+                childAspectRatio: 0.8,
                 children: List.generate(
                   snapshot.data!.length,
                   (index) => Padding(

@@ -57,6 +57,10 @@ class ScanCardItem extends StatelessWidget {
                 const SizedBox(
                   height: 8.0,
                 ),
+                _locationRow,
+                const SizedBox(
+                  height: 8.0,
+                ),
                 _createdAtRow
               ],
             ),
@@ -67,18 +71,39 @@ class ScanCardItem extends StatelessWidget {
   }
 
   Widget get _temperatureRow => _buildScanDataRow(FontAwesomeIcons.thermometerThreeQuarters, Colors.orange,
-      "${scan.temperature != null ? scan.temperature! : "-"} ${String.fromCharCode($deg)}C");
+      dataString: "${scan.temperature != null ? scan.temperature! : "-"} ${String.fromCharCode($deg)}C");
 
   Widget get _humidityRow =>
-      _buildScanDataRow(FontAwesomeIcons.tint, Colors.blueAccent, "${scan.humidity != null ? scan.humidity! : "-"} %");
+      _buildScanDataRow(FontAwesomeIcons.tint, Colors.blueAccent, dataString: "${scan.humidity != null ? scan.humidity! : "-"} %");
 
-  Widget get _pressureRow => _buildScanDataRow(
-      FontAwesomeIcons.wind, Colors.white70, "${scan.pressure != null ? ConverterUtil.fromPaToHPa(scan.pressure!) : "-"} hPa");
+  Widget get _pressureRow => _buildScanDataRow(FontAwesomeIcons.wind, Colors.white70,
+      dataString: "${scan.pressure != null ? ConverterUtil.fromPaToHPa(scan.pressure!) : "-"} hPa");
 
-  Widget get _createdAtRow => _buildScanDataRow(
-      FontAwesomeIcons.clock, Colors.grey, scan.createdAt != null ? "${DateUtil.germanDateTimeFormatter.format(scan.createdAt!)}" : "");
+  Widget get _locationRow => _buildScanDataRow(
+        FontAwesomeIcons.mapMarkerAlt,
+        Colors.deepOrange,
+        dataWidget: scan.longitude == null && scan.latitude == null
+            ? Text("-")
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Lat. ${scan.latitude!.toStringAsFixed(5)}",
+                  ),
+                  const SizedBox(
+                    height: 4.0,
+                  ),
+                  Text(
+                    "Long. ${scan.longitude!.toStringAsFixed(5)}",
+                  ),
+                ],
+              ),
+      );
 
-  Widget _buildScanDataRow(final IconData iconData, final Color iconColor, final String dataString) {
+  Widget get _createdAtRow => _buildScanDataRow(FontAwesomeIcons.clock, Colors.grey,
+      dataString: scan.createdAt != null ? "${DateUtil.germanDateTimeFormatter.format(scan.createdAt!)}" : "");
+
+  Widget _buildScanDataRow(final IconData iconData, final Color iconColor, {final String? dataString, final Widget? dataWidget}) {
     return Row(
       children: [
         Container(
@@ -93,12 +118,14 @@ class ScanCardItem extends StatelessWidget {
         const SizedBox(
           width: 8.0,
         ),
-        Text(
-          dataString,
-          style: const TextStyle(
-            color: Colors.white,
+        if (dataString != null)
+          Text(
+            dataString,
+            style: const TextStyle(
+              color: Colors.white,
+            ),
           ),
-        ),
+        if (dataWidget != null) dataWidget
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_track_app_bar.dart';
 import 'package:sensor_track/components/sensor_track_button.dart';
@@ -9,6 +10,7 @@ import 'package:sensor_track/components/sensor_track_card.dart';
 import 'package:sensor_track/components/sensor_track_loading_widget.dart';
 import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
+import 'package:sensor_track/services/location_service.dart';
 import 'package:sensor_track/services/scan_service.dart';
 import 'package:sensor_track/services/sensor_service.dart';
 import 'package:charcode/charcode.dart';
@@ -29,6 +31,7 @@ class LiveSensorDeviceScreen extends StatefulWidget {
 class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
   late SensorService _sensorService;
   late ScanService _scanService;
+  late LocationService _locationService;
 
   late bool _isSaving;
   late Color _buttonColor;
@@ -46,6 +49,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
   void didChangeDependencies() {
     _sensorService = Provider.of<SensorService>(context, listen: false);
     _scanService = Provider.of<ScanService>(context, listen: false);
+    _locationService = Provider.of<LocationService>(context, listen: false)..listenLocation();
 
     _startListenById();
 
@@ -62,67 +66,77 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
       body: StreamBuilder<bool>(
         stream: _sensorService.searching,
         builder: (context, searchingSnapshot) {
-          return StreamBuilder<Sensor?>(
-            stream: _sensorService.singleSensor,
-            builder: (context, snapshot) {
-              if (searchingSnapshot.connectionState == ConnectionState.waiting ||
-                  snapshot.connectionState == ConnectionState.waiting ||
-                  searchingSnapshot.data != null && searchingSnapshot.data!) {
-                return readSensorDataLoadingWidget;
-              } else if (snapshot.hasData) {
-                final sensor = snapshot.data!;
-                return Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          return StreamBuilder<Position?>(
+              stream: _locationService.position,
+              builder: (context, locationSnapshot) {
+                return StreamBuilder<Sensor?>(
+                  stream: _sensorService.singleSensor,
+                  builder: (context, snapshot) {
+                    if (searchingSnapshot.connectionState == ConnectionState.waiting ||
+                        locationSnapshot.connectionState == ConnectionState.waiting ||
+                        snapshot.connectionState == ConnectionState.waiting ||
+                        searchingSnapshot.data != null && searchingSnapshot.data!) {
+                      return readSensorDataLoadingWidget;
+                    } else if (snapshot.hasData && locationSnapshot.hasData) {
+                      final sensor = snapshot.data!;
+                      final position = locationSnapshot.data!;
+                      return Column(
                         children: [
-                          _getTemperatureCard(sensor.temperature),
-                          const SizedBox(
-                            height: 16.0,
+                          Expanded(
+                            child: ListView(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              children: [
+                                _getTemperatureCard(sensor.temperature),
+                                const SizedBox(
+                                  height: 16.0,
+                                ),
+                                _getHumidityCard(sensor.humidity),
+                                const SizedBox(
+                                  height: 16.0,
+                                ),
+                                _getPressureCard(sensor.pressure),
+                                const SizedBox(
+                                  height: 16.0,
+                                ),
+                                _getPositionCard(position),
+                              ],
+                            ),
                           ),
-                          _getHumidityCard(sensor.humidity),
-                          const SizedBox(
-                            height: 16.0,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 40.0),
+                            child: Container(
+                              width: double.infinity,
+                              child: SensorTrackButton(
+                                text: _buttonText,
+                                textStyle: const TextStyle(
+                                  fontSize: 18.0,
+                                  color: Colors.white,
+                                ),
+                                onPressed: !_isSaving
+                                    ? () async {
+                                        await _saveScan(sensor, position);
+                                      }
+                                    : null,
+                                loading: _isSaving,
+                                color: _buttonColor,
+                                icon: _buttonIcon,
+                              ),
+                            ),
                           ),
-                          _getPressureCard(sensor.pressure)
                         ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 40.0),
-                      child: Container(
-                        width: double.infinity,
-                        child: SensorTrackButton(
-                          text: _buttonText,
-                          textStyle: const TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.white,
-                          ),
-                          onPressed: !_isSaving
-                              ? () async {
-                                  await _saveScan(sensor);
-                                }
-                              : null,
-                          loading: _isSaving,
-                          color: _buttonColor,
-                          icon: _buttonIcon,
-                        ),
-                      ),
-                    ),
-                  ],
+                      );
+                    } else if (snapshot.hasError) {
+                      return const Center(
+                        child: const Text("Es ist ein Fehler aufgetreten"),
+                      );
+                    } else {
+                      return const Center(
+                        child: const Text("Keine Daten verfügbar"),
+                      );
+                    }
+                  },
                 );
-              } else if (snapshot.hasError) {
-                return const Center(
-                  child: const Text("Es ist ein Fehler aufgetreten"),
-                );
-              } else {
-                return const Center(
-                  child: const Text("Keine Daten verfügbar"),
-                );
-              }
-            },
-          );
+              });
         },
       ),
     );
@@ -134,7 +148,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     }
   }
 
-  _saveScan(final Sensor sensor) async {
+  _saveScan(final Sensor sensor, final Position position) async {
     setState(() {
       _isSaving = true;
     });
@@ -143,6 +157,8 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
       temperature: sensor.temperature,
       humidity: sensor.humidity,
       pressure: sensor.pressure,
+      latitude: position.latitude,
+      longitude: position.longitude,
       sensorDeviceName: sensor.name,
       sensorDeviceLogoURL: sensor.logoURL,
       createdAt: DateTime.now(),
@@ -204,7 +220,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     return _buildCard(
       FontAwesomeIcons.thermometerThreeQuarters,
       Colors.orange,
-      temperature == null ? "-" : "$temperature ${String.fromCharCode($deg)}C",
+      dataString: temperature == null ? "-" : "$temperature ${String.fromCharCode($deg)}C",
     );
   }
 
@@ -212,7 +228,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     return _buildCard(
       FontAwesomeIcons.tint,
       Colors.blueAccent,
-      humidity == null ? "-" : "${humidity.toStringAsFixed(2)} %",
+      dataString: humidity == null ? "-" : "${humidity.toStringAsFixed(2)} %",
     );
   }
 
@@ -220,11 +236,35 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     return _buildCard(
       FontAwesomeIcons.wind,
       Colors.white70,
-      pressure == null ? "-" : "${ConverterUtil.fromPaToHPa(pressure).toStringAsFixed(2)} hPa",
+      dataString: pressure == null ? "-" : "${ConverterUtil.fromPaToHPa(pressure).toStringAsFixed(2)} hPa",
     );
   }
 
-  Widget _buildCard(final IconData icon, final Color iconColor, final String dataString) {
+  Widget _getPositionCard(final Position? position) {
+    return _buildCard(
+      FontAwesomeIcons.mapMarkerAlt,
+      Colors.deepOrange,
+      dataWidget: position == null
+          ? Text("-")
+          : Column(
+              children: [
+                Text(
+                  "Lat. ${position.latitude.toStringAsFixed(5)}",
+                  style: const TextStyle(fontSize: 24.0),
+                ),
+                const SizedBox(
+                  height: 4.0,
+                ),
+                Text(
+                  "Long. ${position.longitude.toStringAsFixed(5)}",
+                  style: const TextStyle(fontSize: 24.0),
+                )
+              ],
+            ),
+    );
+  }
+
+  Widget _buildCard(final IconData icon, final Color iconColor, {final String? dataString, final Widget? dataWidget}) {
     return SensorTrackCard(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -235,12 +275,14 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
             size: 35.0,
           ),
           const SizedBox(width: 16.0),
-          Text(
-            dataString,
-            style: const TextStyle(
-              fontSize: 30.0,
+          if (dataString != null)
+            Text(
+              dataString,
+              style: const TextStyle(
+                fontSize: 30.0,
+              ),
             ),
-          ),
+          if (dataWidget != null) dataWidget,
         ],
       ),
     );

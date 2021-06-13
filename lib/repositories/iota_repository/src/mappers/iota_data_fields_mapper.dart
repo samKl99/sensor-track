@@ -17,6 +17,14 @@ class IotaDataFieldsMapper {
       data[IotaDataFieldsEnum.pressureKey] = scan.pressure;
     }
 
+    if (scan.latitude != null) {
+      data[IotaDataFieldsEnum.latitudeKey] = scan.latitude;
+    }
+
+    if (scan.longitude != null) {
+      data[IotaDataFieldsEnum.longitudeKey] = scan.longitude;
+    }
+
     return data;
   }
 }

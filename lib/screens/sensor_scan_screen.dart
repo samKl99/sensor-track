@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_list_item.dart';
 import 'package:sensor_track/components/sensor_track_app_bar.dart';
-import 'package:sensor_track/screens/sensor_track_create_device_screen.dart';
+import 'package:sensor_track/screens/create_device_screen.dart';
 import 'package:sensor_track/components/sensor_track_loading_widget.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/services/sensor_service.dart';

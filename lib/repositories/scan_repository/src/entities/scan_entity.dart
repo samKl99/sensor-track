@@ -34,6 +34,12 @@ class ScanEntity {
   @HiveField(9)
   int? accelerationZ;
 
+  @HiveField(10)
+  double? latitude;
+
+  @HiveField(11)
+  double? longitude;
+
   ScanEntity({
     this.id,
     this.pressure,
@@ -42,6 +48,8 @@ class ScanEntity {
     this.accelerationX,
     this.accelerationY,
     this.accelerationZ,
+    this.latitude,
+    this.longitude,
     this.sensorDeviceLogoURL,
     this.sensorDeviceName,
     this.createdAt,
