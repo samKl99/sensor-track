@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_track_app_bar.dart';
 import 'package:sensor_track/components/sensor_track_button.dart';
-import 'package:sensor_track/components/sensor_track_data_field_list_item.dart';
 import 'package:sensor_track/components/sensor_track_text_field.dart';
 import 'package:sensor_track/repositories/iota_repository/iota_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
@@ -51,7 +50,7 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
   void initState() {
     _isSavingSensor = false;
 
-    _dataFields = _sensorService.getAllowedDataTypes();
+    _dataFields = _iotaService.allowedDataTypes.values.toList();
 
     super.initState();
   }

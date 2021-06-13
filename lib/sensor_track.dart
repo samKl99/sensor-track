@@ -12,6 +12,7 @@ import 'package:sensor_track/screens/sensor_screen.dart';
 import 'package:sensor_track/services/authentication_service.dart';
 import 'package:sensor_track/services/bluetooth_service.dart';
 import 'package:sensor_track/services/iota_service.dart';
+import 'package:sensor_track/services/location_service.dart';
 import 'package:sensor_track/services/notification_service.dart';
 import 'package:sensor_track/services/scan_service.dart';
 import 'package:sensor_track/services/sensor_service.dart';
@@ -33,6 +34,10 @@ class SensorTrack extends StatelessWidget {
         ),
         Provider<IotaClient>(
           create: (_) => IotaClient(IotaConfiguration()),
+        ),
+        Provider<LocationService>(
+          create: (_) => LocationService(),
+          lazy: false,
         ),
         Provider<HiveScanRepository>(
           create: (_) => HiveScanRepository(),

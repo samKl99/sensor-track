@@ -22,6 +22,9 @@ class Scan {
   /* acceleration z axis in mg */
   final int? accelerationZ;
 
+  final double? latitude;
+  final double? longitude;
+
   final DateTime? createdAt;
   final String? sensorDeviceName;
   final String? sensorDeviceLogoURL;
@@ -34,6 +37,8 @@ class Scan {
     this.accelerationX,
     this.accelerationY,
     this.accelerationZ,
+    this.longitude,
+    this.latitude,
     this.createdAt,
     this.sensorDeviceName,
     this.sensorDeviceLogoURL,
@@ -48,6 +53,8 @@ class Scan {
       accelerationX: accelerationY,
       accelerationY: accelerationY,
       accelerationZ: accelerationZ,
+      latitude: latitude,
+      longitude: longitude,
       createdAt: createdAt,
       sensorDeviceLogoURL: sensorDeviceLogoURL,
       sensorDeviceName: sensorDeviceName,
@@ -63,6 +70,8 @@ class Scan {
       accelerationX: entity.accelerationX,
       accelerationY: entity.accelerationY,
       accelerationZ: entity.accelerationZ,
+      latitude: entity.latitude,
+      longitude: entity.longitude,
       createdAt: entity.createdAt,
       sensorDeviceName: entity.sensorDeviceName,
       sensorDeviceLogoURL: entity.sensorDeviceLogoURL,
