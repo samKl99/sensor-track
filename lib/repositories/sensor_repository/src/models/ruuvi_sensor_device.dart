@@ -1,8 +1,8 @@
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/models/sensor_type.dart';
-import 'package:sensor_track/ruuvi/data_format_5_decoder.dart';
-import 'package:sensor_track/ruuvi/ruuvi_acceleration.dart';
-import 'package:sensor_track/ruuvi/ruuvi_power_info.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/ruuvi/data_format_5_decoder.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/ruuvi/ruuvi_acceleration.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/ruuvi/ruuvi_power_info.dart';
 
 class RuuviSensorDevice extends Sensor {
   RuuviAcceleration? acceleration;

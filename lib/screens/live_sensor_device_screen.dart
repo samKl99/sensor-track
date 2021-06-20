@@ -10,6 +10,7 @@ import 'package:sensor_track/components/sensor_track_card.dart';
 import 'package:sensor_track/components/sensor_track_loading_widget.dart';
 import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/models/sensor_type.dart';
 import 'package:sensor_track/services/location_service.dart';
 import 'package:sensor_track/services/scan_service.dart';
 import 'package:sensor_track/services/sensor_service.dart';
@@ -51,9 +52,16 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     _scanService = Provider.of<ScanService>(context, listen: false);
     _locationService = Provider.of<LocationService>(context, listen: false)..listenLocation();
 
-    _startListenById();
+    if (widget.sensor.type == SensorType.RUUVI) {
+      _startListenById();
+    }
+
+    if (widget.sensor.type == SensorType.TEXAS_INSTRUMENTS) {
+      _sensorService.listenTexasInstrumentsDevice(widget.sensor.id!);
+    }
 
     _setButtonThemeDefault(false);
+
     super.didChangeDependencies();
   }
 
@@ -144,7 +152,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
 
   _startListenById({final bool showLoadingSpinner = true}) {
     if (widget.sensor.macAddress != null) {
-      _sensorService.listenByDeviceId(widget.sensor.macAddress!, showLoadingSpinner: showLoadingSpinner);
+      _sensorService.listenRuuviDevice(widget.sensor.macAddress!, showLoadingSpinner: showLoadingSpinner);
     }
   }
 
@@ -220,7 +228,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     return _buildCard(
       FontAwesomeIcons.thermometerThreeQuarters,
       Colors.orange,
-      dataString: temperature == null ? "-" : "$temperature ${String.fromCharCode($deg)}C",
+      dataString: temperature == null ? "-" : "${temperature.toStringAsFixed(2)} ${String.fromCharCode($deg)}C",
     );
   }
 

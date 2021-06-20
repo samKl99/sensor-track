@@ -1,7 +1,8 @@
-import 'package:sensor_track/ruuvi/ruuvi_acceleration.dart';
-import 'package:sensor_track/ruuvi/ruuvi_power_info.dart';
-
 /* Decoder for Ruuvi data format 5 (https://github.com/ruuvi/ruuvi-sensor-protocols/blob/master/dataformat_05.md) */
+
+import 'package:sensor_track/repositories/sensor_repository/src/ruuvi/ruuvi_acceleration.dart';
+import 'package:sensor_track/repositories/sensor_repository/src/ruuvi/ruuvi_power_info.dart';
+
 class RuuviDataFormat5Decoder {
   /* return temperature in celsius */
   static double? getTemperature(final List<int> data) {
