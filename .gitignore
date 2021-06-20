@@ -44,3 +44,7 @@ app.*.map.json
 # Generated sources
 **/*.g.dart
 lib/generated/**
+
+# Firebase config
+ios/Runner/GoogleService-Info.plist
+android/app/google-services.json

@@ -8,6 +8,8 @@ abstract class AuthenticationRepository {
 
   Future<void> loginWithGoogle();
 
+  Future<void> loginWithApple();
+
   Future<void> logout();
 
   Future<User?> getUser();

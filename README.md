@@ -15,11 +15,31 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+## Decrypt Firebase config
+
+In order to run and build the app you need to decrypt it first:
+
+```
+gpg --batch --passphrase ${GPG_PASSPHRASE} android/app/google-services.json.gpg
+```
+
+```
+gpg --batch --passphrase ${GPG_PASSPHRASE} ios/Runner/GoogleService-Info.plist.gpg
+```
+
+where `GPG_PASSPHRASE` is the passphrase that encrypts the respective file.
+
 ## Generate Code
 
 ```
 flutter packages pub run build_runner build --delete-conflicting-outputs
 ```
+
+## Login
+
+The app offers different auth methods such as Email/Password, Google and Apple.
+To view your sensor data on the IOTA data marketplace must sign in with Google, as the data marketplace only offers Google as
+an authentication provider.
 
 ## Edit app launcher name
   
