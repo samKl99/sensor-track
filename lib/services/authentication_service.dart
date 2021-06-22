@@ -55,6 +55,20 @@ class AuthenticationService extends Bloc {
     }
   }
 
+  Future<void> loginWithApple() async {
+    try {
+      _isAuthenticating.add(true);
+      await _firebaseAuthenticationRepository.loginWithApple();
+      await _populateUser();
+    } catch (e) {
+      print(e);
+      _user.addError("can't login user with apple auth");
+      rethrow;
+    } finally {
+      _isAuthenticating.add(false);
+    }
+  }
+
   Future<void> register(final String email, final String password) async {
     try {
       await _firebaseAuthenticationRepository.registerWithEmailAndPassword(email, password);

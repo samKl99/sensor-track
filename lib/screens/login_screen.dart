@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -20,6 +22,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordConfirmController = TextEditingController();
 
+  late AuthenticationService _authenticationService;
+  late NotificationService _notificationService;
+
   late bool _isLoginFlow;
   late bool _isEmailValid;
   late bool _isPasswordValid;
@@ -34,12 +39,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  AuthenticationService get _authenticationService => Provider.of<AuthenticationService>(context, listen: false);
-
-  NotificationService get _notificationService => Provider.of<NotificationService>(context, listen: false);
-
   @override
   void initState() {
+    _authenticationService = Provider.of<AuthenticationService>(context, listen: false);
+    _notificationService = Provider.of<NotificationService>(context, listen: false);
+
     _isLoginFlow = true;
     _isEmailValid = false;
     _isPasswordValid = false;
@@ -92,7 +96,20 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(
             height: 16.0,
           ),
+          Platform.isIOS
+              ? Column(
+                  children: [
+                    loginWithAppleButton,
+                    const SizedBox(
+                      height: 16.0,
+                    ),
+                  ],
+                )
+              : Container(),
           registerButton,
+          const SizedBox(
+            height: 16.0,
+          ),
         ],
       ),
     );
@@ -165,6 +182,24 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: _authenticateWithGoogle,
       );
 
+  Widget get loginWithAppleButton => SensorTrackButton(
+        icon: Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: SvgPicture.asset(
+            "assets/icons/apple.svg",
+            width: 25.0,
+            height: 25.0,
+            color: Colors.white,
+          ),
+        ),
+        text: "Login mit Apple",
+        textStyle: const TextStyle(
+          fontSize: 18.0,
+        ),
+        color: primaryColorLight,
+        onPressed: _authenticateWithApple,
+      );
+
   Future<void> _authenticateWithCredentials() async {
     try {
       setState(() {
@@ -192,6 +227,14 @@ class _LoginScreenState extends State<LoginScreen> {
       await _authenticationService.loginWithGoogle();
     } catch (e) {
       _notificationService.showErrorSnackBar(context, "Google Login fehlgeschlagen");
+    }
+  }
+
+  Future<void> _authenticateWithApple() async {
+    try {
+      await _authenticationService.loginWithApple();
+    } catch (e) {
+      _notificationService.showErrorSnackBar(context, "Apple Login fehlgeschlagen");
     }
   }
 

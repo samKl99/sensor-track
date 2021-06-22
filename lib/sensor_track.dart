@@ -8,8 +8,6 @@ import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/src/texas_instruments/texas_instruments_service.dart';
 import 'package:sensor_track/screens/auth_screen.dart';
-import 'package:sensor_track/screens/home_screen.dart';
-import 'package:sensor_track/screens/sensor_screen.dart';
 import 'package:sensor_track/services/authentication_service.dart';
 import 'package:sensor_track/services/bluetooth_service.dart';
 import 'package:sensor_track/services/iota_service.dart';
@@ -44,18 +42,18 @@ class SensorTrack extends StatelessWidget {
         Provider<TexasInstrumentsService>(
           create: (_) => TexasInstrumentsService(),
         ),
-        Provider<HiveScanRepository>(
-          create: (_) => HiveScanRepository(),
-        ),
         Provider<FirebaseAuthenticationRepository>(
           create: (_) => FirebaseAuthenticationRepository(firebaseAuth: FirebaseAuth.instance),
-        ),
-        Provider<HiveSensorRepository>(
-          create: (_) => HiveSensorRepository(),
         ),
         ProxyProvider2<IotaClient, FirebaseAuthenticationRepository, AuthenticationService>(
           update: (context, client, repository, _) => AuthenticationService(repository, client)..isUserAuthenticated(),
           //dispose: (context, service) => service.dispose(),
+        ),
+        ProxyProvider<AuthenticationService, HiveSensorRepository>(
+          update: (context, authenticationService, _) => HiveSensorRepository(authenticationService),
+        ),
+        ProxyProvider<AuthenticationService, HiveScanRepository>(
+          update: (context, authenticationService, _) => HiveScanRepository(authenticationService),
         ),
         ProxyProvider2<IotaClient, AuthenticationService, IotaService>(
           update: (context, client, authenticationService, _) => IotaService(client, authenticationService),
