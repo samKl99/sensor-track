@@ -10,7 +10,6 @@ import 'package:sensor_track/components/sensor_track_card.dart';
 import 'package:sensor_track/components/sensor_track_loading_widget.dart';
 import 'package:sensor_track/repositories/scan_repository/scan_repository.dart';
 import 'package:sensor_track/repositories/sensor_repository/sensor_repository.dart';
-import 'package:sensor_track/repositories/sensor_repository/src/models/sensor_type.dart';
 import 'package:sensor_track/services/location_service.dart';
 import 'package:sensor_track/services/scan_service.dart';
 import 'package:sensor_track/services/sensor_service.dart';
@@ -52,13 +51,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     _scanService = Provider.of<ScanService>(context, listen: false);
     _locationService = Provider.of<LocationService>(context, listen: false)..listenLocation();
 
-    if (widget.sensor.type == SensorType.RUUVI) {
-      _startListenById();
-    }
-
-    if (widget.sensor.type == SensorType.TEXAS_INSTRUMENTS) {
-      _sensorService.listenTexasInstrumentsDevice(widget.sensor.id!);
-    }
+    _sensorService.listenDevice(widget.sensor);
 
     _setButtonThemeDefault(false);
 
@@ -72,7 +65,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
         title: Text(widget.sensor.name != null ? widget.sensor.name! : ""),
       ),
       body: StreamBuilder<bool>(
-        stream: _sensorService.searching,
+        stream: _sensorService.singleSensorSearching,
         builder: (context, searchingSnapshot) {
           return StreamBuilder<Position?>(
               stream: _locationService.position,
@@ -150,12 +143,6 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     );
   }
 
-  _startListenById({final bool showLoadingSpinner = true}) {
-    if (widget.sensor.macAddress != null) {
-      _sensorService.listenRuuviDevice(widget.sensor.macAddress!, showLoadingSpinner: showLoadingSpinner);
-    }
-  }
-
   _saveScan(final Sensor sensor, final Position position) async {
     setState(() {
       _isSaving = true;
@@ -186,7 +173,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
 
     Timer(Duration(milliseconds: 3000), () {
       if (mounted) {
-        _startListenById(showLoadingSpinner: false);
+        _sensorService.listenDevice(widget.sensor, showLoadingSpinner: false);
         _setButtonThemeDefault(true);
       }
     });

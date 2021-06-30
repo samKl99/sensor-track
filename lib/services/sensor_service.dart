@@ -26,11 +26,14 @@ class SensorService extends Bloc {
 
   Stream<bool> get searching => _searching.stream;
 
+  Stream<bool> get singleSensorSearching => _singleSensorSearching.stream;
+
   final _sensors = BehaviorSubject<List<Sensor>>.seeded([]);
   final _registeredSensors = BehaviorSubject<List<Sensor>>.seeded([]);
   final _singleSensor = BehaviorSubject<Sensor?>.seeded(null);
   final _loading = BehaviorSubject<bool>.seeded(false);
   final _searching = BehaviorSubject<bool>.seeded(false);
+  final _singleSensorSearching = BehaviorSubject<bool>.seeded(false);
 
   final Set<blue.BluetoothDevice> _connectedDevices = Set();
 
@@ -63,6 +66,7 @@ class SensorService extends Bloc {
     _connectedDevices.forEach((element) {
       element.disconnect();
     });
+    _sensors.add([]);
     _searching.add(false);
     _singleSensor.add(null);
   }
@@ -89,17 +93,27 @@ class SensorService extends Bloc {
     }
   }
 
-  void listenRuuviDevice(final String macAddress, {final bool showLoadingSpinner = true}) {
+  void listenDevice(final Sensor sensor, {final bool showLoadingSpinner = true}) {
+    if (sensor.type == SensorType.RUUVI && sensor.macAddress != null) {
+      _listenRuuviDevice(sensor.macAddress!, showLoadingSpinner: showLoadingSpinner);
+    }
+
+    if (sensor.type == SensorType.TEXAS_INSTRUMENTS) {
+      _listenTexasInstrumentsDevice(sensor.id!);
+    }
+  }
+
+  void _listenRuuviDevice(final String macAddress, {final bool showLoadingSpinner = true}) {
     if (showLoadingSpinner) {
-      _searching.add(true);
+      _singleSensorSearching.add(true);
       _singleSensor.add(null);
     }
 
     _bluetoothService.listenByDeviceMacAddress(macAddress).listen((result) => _listenOnRuuviDevice(result));
   }
 
-  void listenTexasInstrumentsDevice(final String id) async {
-    _searching.add(true);
+  void _listenTexasInstrumentsDevice(final String id) async {
+    _singleSensorSearching.add(true);
     _bluetoothService.listenByDeviceId(id).listen((result) async {
       final device = result.device;
 
@@ -129,7 +143,7 @@ class SensorService extends Bloc {
           final device = devices.first;
           if (device.temperature != null && device.humidity != null && device.pressure != null) {
             _singleSensor.add(device);
-            _searching.add(false);
+            _singleSensorSearching.add(false);
           }
         });
       }
@@ -188,7 +202,7 @@ class SensorService extends Bloc {
     final ruuviDevices = _getDevices([result]).where((element) => element.type == SensorType.RUUVI);
     if (ruuviDevices.isNotEmpty) {
       _singleSensor.add(ruuviDevices.first);
-      _searching.add(false);
+      _singleSensorSearching.add(false);
     }
   }
 
@@ -240,5 +254,8 @@ class SensorService extends Bloc {
 
     _searching.drain();
     _searching.close();
+
+    _singleSensorSearching.drain();
+    _singleSensorSearching.close();
   }
 }
