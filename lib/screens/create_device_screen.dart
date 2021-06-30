@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_track_app_bar.dart';
 import 'package:sensor_track/components/sensor_track_button.dart';
@@ -283,8 +284,8 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
         type: _sensorTypeController.text.trim(),
         date: DateTime.now(),
         price: int.parse(_priceOfDataStreamController.text.trim()),
-        lat: double.parse(_latController.text.trim()),
-        lon: double.parse(_lonController.text.trim()),
+        lat: NumberFormat().parse(_latController.text.trim()).toDouble(),
+        lon: NumberFormat().parse(_lonController.text.trim()).toDouble(),
         sensorId: _sensorIdController.text.trim(),
         inactive: true,
         owner: _authenticationService.currentUser!.id,
