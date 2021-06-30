@@ -170,19 +170,12 @@ class SensorService extends Bloc {
     return await _sensorRepository.sensorById(id) != null;
   }
 
-  Future<bool> isSensorPersistedByMacAddress(final String? macAddress) async {
-    if (macAddress == null) {
-      return false;
-    }
-    return await _sensorRepository.sensorByMacAddress(macAddress) != null;
-  }
-
   Future<void> _listenOnSensorDevices(final List<blue.ScanResult> results) async {
     final devices = _getDevices(results);
 
     if (devices.isNotEmpty) {
       final registeredDevices = await Future.wait(devices.map((e) async {
-        await isSensorPersistedByMacAddress(e.macAddress) ? e.registeredOnDataMarketplace = true : e.registeredOnDataMarketplace = false;
+        await isSensorPersisted(e.id) ? e.registeredOnDataMarketplace = true : e.registeredOnDataMarketplace = false;
         return e;
       }).toList());
 
@@ -229,19 +222,6 @@ class SensorService extends Bloc {
               name: e.device.name,
             ))
         .toList();
-  }
-
-  List<Sensor> _mockData() {
-    return [
-      RuuviSensorDevice(
-          id: "123456789",
-          name: "Sensor 1",
-          data: [5, 16, 218, 81, 53, 197, 186, 0, 24, 255, 244, 4, 4, 167, 182, 22, 78, 253, 251, 130, 180, 169, 180, 49]),
-      RuuviSensorDevice(
-          id: "123456789",
-          name: "Sensor 2",
-          data: [5, 16, 218, 81, 53, 197, 186, 0, 24, 255, 244, 4, 4, 167, 182, 22, 78, 253, 251, 130, 180, 169, 180, 49])
-    ];
   }
 
   @override
