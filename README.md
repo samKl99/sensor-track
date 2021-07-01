@@ -1,10 +1,8 @@
 # sensor_track
 
-A new Flutter project.
+Flutter App to read data from RuuviTag and CC2541 SensorTag Texas Instruments.
 
 ## Getting Started
-
-This project is a starting point for a Flutter application.
 
 A few resources to get you started if this is your first Flutter project:
 
@@ -30,6 +28,8 @@ gpg --batch --passphrase ${GPG_PASSPHRASE} ios/Runner/GoogleService-Info.plist.g
 where `GPG_PASSPHRASE` is the passphrase that encrypts the respective file.
 
 ## Generate Code
+
+In order to run and build the app you need to generate source code first:
 
 ```
 flutter packages pub run build_runner build --delete-conflicting-outputs
