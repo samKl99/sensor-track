@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:sensor_track/components/sensor_track_app_bar.dart';
 import 'package:sensor_track/components/sensor_track_button.dart';
 import 'package:sensor_track/components/sensor_track_card.dart';
@@ -38,6 +39,9 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
   late String _buttonText;
   Icon? _buttonIcon;
 
+  final _singleSensorStream = BehaviorSubject<Sensor?>.seeded(null);
+  late StreamSubscription _singleSensorSubscription;
+
   @override
   void initState() {
     _isSaving = false;
@@ -52,6 +56,10 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     _locationService = Provider.of<LocationService>(context, listen: false)..listenLocation();
 
     _sensorService.listenDevice(widget.sensor);
+
+    _singleSensorSubscription = _sensorService.singleSensor.listen((event) {
+      _singleSensorStream.add(event);
+    });
 
     _setButtonThemeDefault(false);
 
@@ -71,7 +79,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
               stream: _locationService.position,
               builder: (context, locationSnapshot) {
                 return StreamBuilder<Sensor?>(
-                  stream: _sensorService.singleSensor,
+                  stream: _singleSensorStream.stream,
                   builder: (context, snapshot) {
                     if (searchingSnapshot.connectionState == ConnectionState.waiting ||
                         locationSnapshot.connectionState == ConnectionState.waiting ||
@@ -145,6 +153,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
 
   _saveScan(final Sensor sensor, final Position position) async {
     setState(() {
+      _singleSensorSubscription.pause();
       _isSaving = true;
     });
 
@@ -168,6 +177,7 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
     } finally {
       setState(() {
         _isSaving = false;
+        _singleSensorSubscription.resume();
       });
     }
 
@@ -295,7 +305,10 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
 
   @override
   void dispose() async {
+    _singleSensorSubscription.cancel();
     _sensorService.stopSearchingSensors();
+    _singleSensorStream.drain();
+    _singleSensorStream.close();
     super.dispose();
   }
 }
