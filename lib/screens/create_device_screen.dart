@@ -310,6 +310,7 @@ class _SensorTrackCreateDeviceScreenState extends State<SensorTrackCreateDeviceS
         await _sensorService.addSensor(sensor);
         _sensorService.getRegisteredSensors();
 
+        _sensorService.stopSearchingSensors();
         _moveToSensorScreen();
       } catch (e) {
         print(e);

@@ -16,7 +16,7 @@ class ScanScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: SensorTrackAppBar(
-        title: const Text("Scannen"),
+        title: const Text("Sensor suchen"),
       ),
       body: StreamBuilder<bool>(
         stream: sensorService.searching,
@@ -26,7 +26,7 @@ class ScanScreen extends StatelessWidget {
             builder: (context, snapshot) {
               if (searchingSnapshot.connectionState == ConnectionState.waiting ||
                   snapshot.connectionState == ConnectionState.waiting ||
-                  (searchingSnapshot.data != null && searchingSnapshot.data! && !snapshot.hasData || snapshot.data!.isEmpty)) {
+                  (searchingSnapshot.data != null && searchingSnapshot.data! && (!snapshot.hasData || snapshot.data!.isEmpty))) {
                 return bluetoothDevicesSearchingWidget;
               } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final sensorDevices = snapshot.data!;
