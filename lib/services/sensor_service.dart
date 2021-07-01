@@ -66,7 +66,6 @@ class SensorService extends Bloc {
     _connectedDevices.forEach((element) {
       element.disconnect();
     });
-    _sensors.add([]);
     _searching.add(false);
     _singleSensor.add(null);
   }
@@ -194,7 +193,6 @@ class SensorService extends Bloc {
       }).toList());
 
       _sensors.add(registeredDevices.where((element) => element.registeredOnDataMarketplace == false).toList());
-      _searching.add(false);
     }
   }
 
