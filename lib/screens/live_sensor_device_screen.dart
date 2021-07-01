@@ -108,6 +108,9 @@ class _LiveSensorDeviceScreenState extends State<LiveSensorDeviceScreen> {
                                   height: 16.0,
                                 ),
                                 _getPositionCard(position),
+                                const SizedBox(
+                                  height: 16.0,
+                                ),
                               ],
                             ),
                           ),
