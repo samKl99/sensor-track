@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensor_track/components/sensor_list_item.dart';
@@ -25,12 +26,17 @@ class ScanScreen extends StatelessWidget {
             builder: (context, snapshot) {
               if (searchingSnapshot.connectionState == ConnectionState.waiting ||
                   snapshot.connectionState == ConnectionState.waiting ||
-                  searchingSnapshot.data != null && searchingSnapshot.data!) {
+                  (searchingSnapshot.data != null && searchingSnapshot.data! && !snapshot.hasData || snapshot.data!.isEmpty)) {
                 return bluetoothDevicesSearchingWidget;
               } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final sensorDevices = snapshot.data!;
+
                 return ListView.builder(
                   itemBuilder: (context, index) {
+                    if (index == sensorDevices.length) {
+                      return searchingWidget;
+                    }
+
                     final sensorDevice = sensorDevices[index];
                     return SensorListItem(
                       sensor: sensorDevice,
@@ -50,7 +56,7 @@ class ScanScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  itemCount: sensorDevices.length,
+                  itemCount: searchingSnapshot.data! && sensorDevices.isNotEmpty ? sensorDevices.length + 1 : sensorDevices.length,
                 );
               } else if (snapshot.hasError) {
                 return const Center(
@@ -74,6 +80,28 @@ class ScanScreen extends StatelessWidget {
         Icons.bluetooth_searching,
         color: secondaryColor,
         size: 40.0,
+      ),
+    );
+  }
+
+  Widget get searchingWidget {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: 15.0,
+            width: 15.0,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0,
+            ),
+          ),
+          const SizedBox(
+            width: 12.0,
+          ),
+          const Text("Sensoren suchen..."),
+        ],
       ),
     );
   }
