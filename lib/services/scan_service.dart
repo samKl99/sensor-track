@@ -39,7 +39,7 @@ class ScanService extends Bloc {
       await _iotaService.createNewDataPacketFromScan(sensor, scan);
       await _scanRepository.addScan(scan);
     } catch (e) {
-      print(e);
+      rethrow;
     } finally {
       _scanSaving.add(false);
     }
@@ -47,20 +47,6 @@ class ScanService extends Bloc {
 
   Future<void> deleteScan(final Scan scan) async {
     await _scanRepository.deleteScan(scan);
-  }
-
-  List<Scan> _getMockScans() {
-    return List.generate(
-      15,
-      (index) => Scan(
-        temperature: 30.7,
-        humidity: 23.1,
-        pressure: 1753,
-        createdAt: DateTime.now(),
-        sensorDeviceName: index % 2 == 0 ? "Sensor 1" : "Sensor 2",
-        sensorDeviceLogoURL: index % 2 == 0 ? "assets/sensor-icons/repositories.sensor_repository.src.ruuvi.png" : "assets/sensor-icons/texas_instruments.png",
-      ),
-    );
   }
 
   @override
